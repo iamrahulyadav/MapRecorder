@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".OnboardingActivity">
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/onboarding_viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"></android.support.v4.view.ViewPager>
+
+    <LinearLayout
+        android:id="@+id/onboarding_linearLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="33dp"
+        android:orientation="horizontal"
+        android:padding="20dp">
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/onboarding_next"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="29dp"
+        android:layout_weight="1"
+        android:background="@android:color/transparent"
+        android:text="Next"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/onboarding_prev"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignStart="@+id/onboarding_content"
+        android:layout_weight="1"
+        android:background="@android:color/transparent"
+        android:text="Back"
+        android:textStyle="bold"
+        android:visibility="invisible" />
+
+</RelativeLayout>

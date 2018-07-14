@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/list_item_image"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="20dp"
+        app:srcCompat="@drawable/ic_map_recorder"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="15dp" />
+
+    <TextView
+        android:id="@+id/list_item_map_name"
+        android:layout_width="275dp"
+        android:layout_height="23dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignTop="@+id/list_item_image"
+        android:layout_marginEnd="20dp"
+        android:text="TextView"
+        android:textSize="20sp"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="20dp" />
+
+    <TextView
+        android:id="@+id/list_item_map_description"
+        android:layout_width="275dp"
+        android:layout_height="33dp"
+        android:layout_marginEnd="20dp"
+        android:layout_alignBottom="@+id/list_item_image"
+        android:layout_alignStart="@+id/list_item_map_name"
+        android:text="TextView"
+        android:textSize="15sp"
+        android:layout_marginRight="20dp"
+        android:layout_alignLeft="@+id/list_item_map_name" />
+</RelativeLayout>
