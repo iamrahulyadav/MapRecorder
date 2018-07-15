@@ -9,10 +9,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
+
+import java.util.HashMap;
 
 public class AccountActivity extends AppCompatActivity {
     Button btnLogout;
     Button btnOpenMap;
+    private TextView username;
     // user session
     UserSessionManager session;
     @Override
@@ -25,15 +29,31 @@ public class AccountActivity extends AppCompatActivity {
             finish();
         }
         setContentView(R.layout.activity_account);
-         // Btn logout
+
+        // Setup bottom nav-bar
+        setupBottomNavbar();
+
+        // get user data
+        HashMap<String, String> user = session.getUserDetails();
+        String userEmail = user.get(UserSessionManager.KEY_EMAIL);
+
+        // Show user name
+        username = (TextView) findViewById(R.id.account_page_username);
+        username.setText(userEmail);
+
+        // Btn logout
         btnLogout = (Button)findViewById(R.id.btn_logout);
         btnLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                btnLogout.setAlpha((float) 0.5);
                 session.logoutUser();
             }
         });
+    }
 
+    // Setup nav-bar
+    private void setupBottomNavbar() {
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         Menu menu = navigation.getMenu();

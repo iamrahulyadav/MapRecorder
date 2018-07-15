@@ -24,7 +24,6 @@ import java.util.HashMap;
 
 public class MainActivity extends Activity {
 
-    private TextView mTextMessage;
     // user session
     UserSessionManager session;
 
@@ -42,14 +41,11 @@ public class MainActivity extends Activity {
         // Check and set permission
         permissionState();
 
-        // get user data
-        HashMap<String, String> user = session.getUserDetails();
-        String userEmail = user.get(UserSessionManager.KEY_EMAIL);
-        String userName = user.get(UserSessionManager.KEY_NAME);
+        // Setup bottom nav-bar
+        setupBottomNavbar();
+    }
 
-        mTextMessage = (TextView) findViewById(R.id.message);
-        mTextMessage.setText("Hello" + userEmail);
-
+    private void setupBottomNavbar() {
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         Menu menu = navigation.getMenu();

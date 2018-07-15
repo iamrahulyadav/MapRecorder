@@ -26,11 +26,15 @@
     <string name="title_activity_edit">Edit</string>
     <string name="title_activity_cloud">Cloud</string>
     <string name="title_activity_account">Account</string>
-    <string name="btn_logout">Logout</string>
+    <string name="btn_logout">Sign Out</string>
+    <string name="btn_app_settings">Preference</string>
+    <string name="btn_edit_profile">Edit Profile</string>
     <string name="title_activity_maps">Map</string>
 
     // Map control
     <string name="map_control_zoom_in">Zoom In</string>
     <string name="map_control_zoom_out">Zoom Out</string>
     <string name="map_control_location">Location</string>
+    <string name="map_control_edit">Edit Map</string>
+    <string name="map_control_undo">Undo Change</string>
 </resources>

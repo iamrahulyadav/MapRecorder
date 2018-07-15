@@ -14,19 +14,51 @@
         android:id="@+id/mapview"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_marginBottom="50dp"
         android:clickable="true"
         android:enabled="true"
         android:focusable="true"
         map:layout_constraintBottom_toTopOf="@+id/navigation" />
 
-    <TextView
-        android:id="@+id/location_coordinates"
+    <com.hitomi.cmlibrary.CircleMenu
+        android:id="@+id/edit_map_circle_menu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="80dp"
-        android:textColor="#333"
-        android:textSize="18dp" />
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="50dp"
+        />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="30dp"
+        android:clipToPadding="false"
+        android:divider="@drawable/horizontal_bar_divider"
+        android:orientation="horizontal"
+        android:padding="4dp"
+        android:showDividers="middle"
+        tools:ignore="RtlHardcoded"
+        tools:layout_editor_absoluteX="300dp"
+        tools:layout_editor_absoluteY="310dp"
+        android:layout_alignParentRight="true">
+
+        <ImageButton
+            android:id="@+id/recording_gps_btn"
+            style="@style/RoundMapButton"
+            android:background="@android:color/background_light"
+            android:contentDescription="@string/map_control_undo"
+            map:srcCompat="@drawable/ic_ready_record_24dp" />
+
+        <ImageButton
+            android:id="@+id/save_map"
+            style="@style/RoundMapButton"
+            android:onClick="ShowSaveMapDialog"
+            android:background="@android:color/background_light"
+            android:contentDescription="@string/map_control_edit"
+            map:srcCompat="@drawable/ic_save_24dp" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -47,18 +79,21 @@
         <ImageButton
             android:id="@+id/zoom_in"
             style="@style/RoundMapButton"
+            android:background="@android:color/background_light"
             android:contentDescription="@string/map_control_zoom_in"
             map:srcCompat="@drawable/ic_add_circle_outline_black_24dp" />
 
         <ImageButton
             android:id="@+id/zoom_out"
             style="@style/RoundMapButton"
+            android:background="@android:color/background_light"
             android:contentDescription="@string/map_control_zoom_out"
             map:srcCompat="@drawable/ic_remove_circle_outline_black_24dp" />
 
         <ImageButton
             android:id="@+id/location_track"
             style="@style/RoundMapButton"
+            android:background="@android:color/background_light"
             android:contentDescription="@string/map_control_location"
             map:srcCompat="@drawable/ic_my_location_black_24dp" />
 

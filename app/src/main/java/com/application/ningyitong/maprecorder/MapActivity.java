@@ -1,11 +1,14 @@
 package com.application.ningyitong.maprecorder;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
@@ -41,6 +44,8 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import android.app.Activity;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -50,10 +55,18 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.SettingsClient;
+import com.hitomi.cmlibrary.CircleMenu;
+import com.hitomi.cmlibrary.OnMenuSelectedListener;
+import com.hitomi.cmlibrary.OnMenuStatusChangeListener;
 
 public class MapActivity extends AppCompatActivity {
+    Database db;
     private MapView map_view;
-    private MapController   mMapController;
+    private MapController mapController;
+    private CircleMenu circleMenu;
+    private ImageButton recordingGpsBtn;
+    private Boolean isRecording = false;
+    private Dialog saveMapDialog;
 
     // Location API
     private FusedLocationProviderClient fusedLocationProviderClient;
@@ -71,28 +84,226 @@ public class MapActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        final DisplayMetrics dm = this.getResources().getDisplayMetrics();
 
         session = new UserSessionManager(getApplicationContext());
         // Check user login status
         if (session.checkLogin()) {
             finish();
         }
-
-        Context ctx = getApplicationContext();
-        //important! set your user agent to prevent getting banned from the osm servers
-        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-
         setContentView(R.layout.activity_map);
 
+        //important! set your user agent to prevent getting banned from the osm servers
+        Context ctx = getApplicationContext();
+        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+
+        // Setup bottom nav-bar
+        setupBottomNavbar();
+
+        // Initial OSM
+        setupMapView();
+
+        // Location
+//        LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+//        LocationListener locationListener = new MyLocationListner();
+
+        // Location
+//        GpsMyLocationProvider gpsMyLocationProvider = new GpsMyLocationProvider(this);
+//        gpsMyLocationProvider.setLocationUpdateMinDistance(100);
+//        gpsMyLocationProvider.setLocationUpdateMinTime(10000);
+//        gpsMyLocationProvider.addLocationSource(LocationManager.NETWORK_PROVIDER);
+
+        MyLocationNewOverlay myLocationoverlay = new MyLocationNewOverlay(map_view);
+        myLocationoverlay.enableFollowLocation();
+        myLocationoverlay.enableMyLocation();
+        map_view.getOverlays().add(myLocationoverlay);
+
+        // Set map center
+//        final GeoPoint startPoint = new GeoPoint(currentLocation);
+//        mapController.setCenter(startPoint);
+
+        // Set recording button
+        recordingGpsBtn = (ImageButton)findViewById(R.id.recording_gps_btn);
+        recordingGpsBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (isRecording) {
+                    isRecording = false;
+                    recordingGpsBtn.setImageResource(R.drawable.ic_ready_record_24dp);
+                    Toast.makeText(getBaseContext(), "Recording stopped", Toast.LENGTH_SHORT).show();
+                } else {
+                    isRecording = true;
+                    recordingGpsBtn.setImageResource(R.drawable.ic_recording_24dp);
+                    Toast.makeText(getBaseContext(), "Recording started", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        // Setup save map
+        saveMapDialog = new Dialog(this);
+
+
+        // Setup map basic control button
+        setupMapControlBtn();
+
+        // Setup circle menu
+        circleMenu = (CircleMenu)findViewById(R.id.edit_map_circle_menu);
+        circleMenu.setMainMenu(Color.parseColor("#ffffff"), R.drawable.ic_edit_menu_24dp, R.mipmap.icon_cancel);
+        circleMenu.addSubMenu(Color.parseColor("#258CFF"), R.drawable.ic_building_white_24dp)
+                  .addSubMenu(Color.parseColor("#30A400"), R.drawable.ic_traffic_white_48dp)
+                  .addSubMenu(Color.parseColor("#FF4B32"), R.drawable.ic_line_white_24dp)
+                  .addSubMenu(Color.parseColor("#8A39FF"), R.drawable.ic_atm_white_24dp)
+                  .addSubMenu(Color.parseColor("#FF6A00"), R.drawable.ic_hospital_white_24dp)
+                  .addSubMenu(Color.parseColor("#FF0000"), R.drawable.ic_undo_black_24dp);
+
+        circleMenu.setOnMenuSelectedListener(new OnMenuSelectedListener() {
+            @Override
+            public void onMenuSelected(int i) {
+                switch (i) {
+                    case 0:
+                        Toast.makeText(getBaseContext(), "Add building", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 1:
+                        Toast.makeText(getBaseContext(), "Add traffic light", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 2:
+                        Toast.makeText(getBaseContext(), "Add line", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 3:
+                        Toast.makeText(getBaseContext(), "Add ATM", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 4:
+                        Toast.makeText(getBaseContext(), "Add hospital", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 5:
+                        Toast.makeText(getBaseContext(), "Undo change", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            }
+        });
+
+        circleMenu.setOnMenuStatusChangeListener(new OnMenuStatusChangeListener() {
+            @Override
+            public void onMenuOpened() {
+                Toast.makeText(getBaseContext(), "Choose object", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onMenuClosed() {
+                Toast.makeText(getBaseContext(), "Exit edit", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (circleMenu.isOpened()) {
+            circleMenu.closeMenu();
+        } else {
+            finish();
+        }
+    }
+
+    // Show save map dialog
+    public void ShowSaveMapDialog(View view) {
+        ImageButton closeDialog;
+        Button cancelSaveMapBtn, confirmSaveMapBtn;
+        final EditText mapName, mapCity, mapOwner, mapDescription, mapDate;
+        saveMapDialog.setContentView(R.layout.map_save_dialog);
+
+        // Dismiss save map dialog
+        closeDialog = (ImageButton)saveMapDialog.findViewById(R.id.map_save_close);
+        closeDialog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveMapDialog.dismiss();
+            }
+        });
+        cancelSaveMapBtn = (Button)saveMapDialog.findViewById(R.id.map_save_cancel);
+        cancelSaveMapBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                saveMapDialog.dismiss();
+            }
+        });
+
+        // Map info
+        db = new Database(this);
+        mapName = (EditText)saveMapDialog.findViewById(R.id.save_map_title);
+        mapCity = (EditText)saveMapDialog.findViewById(R.id.save_map_city);
+        mapOwner = (EditText)saveMapDialog.findViewById(R.id.save_map_owner);
+        mapDescription = (EditText)saveMapDialog.findViewById(R.id.save_map_description);
+        mapDate = (EditText)saveMapDialog.findViewById(R.id.save_map_date);
+
+        confirmSaveMapBtn = (Button)saveMapDialog.findViewById(R.id.map_save_confirm);
+        confirmSaveMapBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String name = mapName.getText().toString();
+                String city = mapCity.getText().toString();
+                String owner = mapOwner.getText().toString();
+                String description = mapDescription.getText().toString();
+                String date = mapDate.getText().toString();
+                String tracking = "gps file path";
+
+                if (name.equals("")) {
+                    Toast.makeText(getBaseContext(), "Map name should not be empty", Toast.LENGTH_SHORT).show();
+                } else {
+                    Boolean insert = db.saveMap(name, city, description, owner, date, tracking);
+                    if (insert) {
+                        Toast.makeText(getBaseContext(), "Save map info successfully", Toast.LENGTH_SHORT).show();
+                        saveMapDialog.dismiss();
+                    } else {
+                        Toast.makeText(getBaseContext(), "Failed to save map data", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
+
+        saveMapDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        saveMapDialog.show();
+    }
+
+    private void setupMapControlBtn() {
+        // Zoom button
+        ImageButton btnZoomIn = (ImageButton) findViewById(R.id.zoom_in);
+        btnZoomIn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mapController.zoomIn();
+            }
+        });
+
+        ImageButton btnZoomOut = (ImageButton) findViewById(R.id.zoom_out);
+        btnZoomOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mapController.zoomOut();
+            }
+        });
+
+        ImageButton btnLocation = (ImageButton) findViewById(R.id.location_track);
+        btnLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (currentLocation != null) {
+                    mapController.setCenter(new GeoPoint(currentLocation));
+                } else {
+                    Toast.makeText(getBaseContext(), "Cannot access your current location", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    private void setupBottomNavbar() {
         // Bottom nav-bar
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         Menu menu = navigation.getMenu();
         MenuItem menuItem = menu.getItem(1);
         menuItem.setChecked(true);
+    }
 
-        // Initial OSM
+    private void setupMapView() {
         map_view = (MapView) findViewById(R.id.mapview);
         map_view.setTileSource(TileSourceFactory.MAPNIK);
         // Enable map clickable
@@ -106,70 +317,18 @@ public class MapActivity extends AppCompatActivity {
         map_view.setMinZoomLevel((double) 3);
         map_view.setMaxZoomLevel((double) 22);
         // Set map default zoom level
-        mMapController = (MapController) map_view.getController();
-        mMapController.setZoom(18);
-        // Display scale bar
-        ScaleBarOverlay sclaeBar = new ScaleBarOverlay(map_view);
-
-        // Location
-        LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-        LocationListener locationListener = new MyLocationListner();
-
-
-        // Location
-//        GpsMyLocationProvider gpsMyLocationProvider = new GpsMyLocationProvider(this);
-//        gpsMyLocationProvider.setLocationUpdateMinDistance(100);
-//        gpsMyLocationProvider.setLocationUpdateMinTime(10000);
-//        gpsMyLocationProvider.addLocationSource(LocationManager.NETWORK_PROVIDER);
-
-        MyLocationNewOverlay myLocationoverlay = new MyLocationNewOverlay(map_view);
-        myLocationoverlay.enableFollowLocation();
-        myLocationoverlay.enableMyLocation();
-        map_view.getOverlays().add(myLocationoverlay);
-
+        mapController = (MapController) map_view.getController();
+        mapController.setZoom(18);
         // Compass
-        CompassOverlay mCompassOverlay = new CompassOverlay(this, new InternalCompassOrientationProvider(this), map_view);
-        mCompassOverlay.enableCompass();
-        map_view.getOverlays().add(mCompassOverlay);
-
+        CompassOverlay compassOverlay = new CompassOverlay(this, new InternalCompassOrientationProvider(this), map_view);
+        compassOverlay.enableCompass();
+        compassOverlay.setCompassCenter(10,10);
+        map_view.getOverlays().add(compassOverlay);
         // Scale Bar
-//        ScaleBarOverlay mScaleBarOverlay = new ScaleBarOverlay(map_view);
-//        mScaleBarOverlay.setCentred(true);
-//        mScaleBarOverlay.setScaleBarOffset(dm.widthPixels / 2, 10);
-//        map_view.getOverlays().add(mScaleBarOverlay);
-
-        // Set map center
-        //final GeoPoint startPoint = new GeoPoint(52.245199, -0.1455979);
-        //mMapController.setCenter(startPoint);
-
-        // Zoom button
-        ImageButton btnZoomIn = (ImageButton) findViewById(R.id.zoom_in);
-        btnZoomIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mMapController.zoomIn();
-            }
-        });
-
-        ImageButton btnZoomOut = (ImageButton) findViewById(R.id.zoom_out);
-        btnZoomOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mMapController.zoomOut();
-            }
-        });
-
-        ImageButton btnLocation = (ImageButton) findViewById(R.id.location_track);
-        btnLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (currentLocation != null) {
-                    mMapController.setCenter(new GeoPoint(currentLocation));
-                } else {
-                    Toast.makeText(getBaseContext(), "Cannot access your current location", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
+        ScaleBarOverlay scaleBarOverlay = new ScaleBarOverlay(map_view);
+        scaleBarOverlay.setCentred(true);
+        scaleBarOverlay.setScaleBarOffset(this.getResources().getDisplayMetrics().widthPixels / 2, 10);
+        map_view.getOverlays().add(scaleBarOverlay);
     }
 
     // Get coordinates listener
@@ -219,8 +378,8 @@ public class MapActivity extends AppCompatActivity {
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                     break;
                 case R.id.navigation_cloud:
-                    Intent intent_clouud = new Intent(MapActivity.this, CloudActivity.class);
-                    startActivity(intent_clouud);
+                    Intent intent_cloud = new Intent(MapActivity.this, CloudActivity.class);
+                    startActivity(intent_cloud);
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                     break;
                 case R.id.navigation_account:

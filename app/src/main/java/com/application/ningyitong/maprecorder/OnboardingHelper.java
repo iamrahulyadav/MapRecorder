@@ -1,6 +1,7 @@
 package com.application.ningyitong.maprecorder;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v4.view.PagerAdapter;
 import android.text.TextWatcher;
@@ -22,18 +23,18 @@ public class OnboardingHelper extends PagerAdapter{
     // add arrays
     public int[] onboarding_images = {
             R.drawable.ic_onboarding1,
-            R.drawable.ic_onboarding1,
-            R.drawable.ic_onboarding2
+            R.drawable.ic_onboarding2,
+            R.drawable.ic_onboarding3
     };
     public String[] onboarding_heading = {
-            "Yitong Baobao",
-            "LOVE",
-            "Yitong Laopo"
+            "Tracking your GPS",
+            "Editing Map",
+            "Sharing Data"
     };
     public String[] onboarding_content = {
-            "I loved you \n I love you still \n Always have \n Always will",
-            "LOVE",
-            "Without you I wouldn't be a happy meal! \n Love you forever"
+            "MapRecorder can record your route by accessing the phone GPS data",
+            "You can add objects and modify your map",
+            "You also can share your local map data with other users"
     };
 
     @Override
