@@ -49,6 +49,7 @@ public class EditActivity extends AppCompatActivity {
 //        listView.setAdapter(customAdapter);
         mapList = new ArrayList<>();
 
+        // Load local map list
         loadMapList();
     }
 

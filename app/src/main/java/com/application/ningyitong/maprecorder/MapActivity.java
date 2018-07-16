@@ -35,6 +35,9 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.ItemizedIconOverlay;
+import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
+import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
@@ -59,7 +62,12 @@ import com.hitomi.cmlibrary.CircleMenu;
 import com.hitomi.cmlibrary.OnMenuSelectedListener;
 import com.hitomi.cmlibrary.OnMenuStatusChangeListener;
 
+import java.util.ArrayList;
+
 public class MapActivity extends AppCompatActivity {
+    final private double DEFAULT_LATITUDE = 44.445883;
+    final private double DEFAULT_LONGITUDE = 26.040963;
+
     Database db;
     private MapView map_view;
     private MapController mapController;
@@ -69,18 +77,23 @@ public class MapActivity extends AppCompatActivity {
     private Dialog saveMapDialog;
 
     // Location API
+    private LocationManager locationManager;
+    private OverlayItem lastPosition = null;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private SettingsClient settingsClient;
     private LocationRequest locationRequest;
     private LocationSettingsRequest locationSettingsRequest;
     private LocationCallback locationCallback;
     private Location currentLocation;
+    OsmLocationUpdateHelper locationUpdateHelper;
+    private ArrayList<OverlayItem> locationItems = new ArrayList<OverlayItem>();
 
     // Location update interval
     private static final long UPDATE_INTERVAL = 10000;
 
     // user session
     UserSessionManager session;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,10 +116,6 @@ public class MapActivity extends AppCompatActivity {
         setupMapView();
 
         // Location
-//        LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-//        LocationListener locationListener = new MyLocationListner();
-
-        // Location
 //        GpsMyLocationProvider gpsMyLocationProvider = new GpsMyLocationProvider(this);
 //        gpsMyLocationProvider.setLocationUpdateMinDistance(100);
 //        gpsMyLocationProvider.setLocationUpdateMinTime(10000);
@@ -122,7 +131,7 @@ public class MapActivity extends AppCompatActivity {
 //        mapController.setCenter(startPoint);
 
         // Set recording button
-        recordingGpsBtn = (ImageButton)findViewById(R.id.recording_gps_btn);
+        recordingGpsBtn = (ImageButton) findViewById(R.id.recording_gps_btn);
         recordingGpsBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -130,6 +139,7 @@ public class MapActivity extends AppCompatActivity {
                     isRecording = false;
                     recordingGpsBtn.setImageResource(R.drawable.ic_ready_record_24dp);
                     Toast.makeText(getBaseContext(), "Recording stopped", Toast.LENGTH_SHORT).show();
+                    // TODO
                 } else {
                     isRecording = true;
                     recordingGpsBtn.setImageResource(R.drawable.ic_recording_24dp);
@@ -141,19 +151,18 @@ public class MapActivity extends AppCompatActivity {
         // Setup save map
         saveMapDialog = new Dialog(this);
 
-
         // Setup map basic control button
         setupMapControlBtn();
 
         // Setup circle menu
-        circleMenu = (CircleMenu)findViewById(R.id.edit_map_circle_menu);
+        circleMenu = (CircleMenu) findViewById(R.id.edit_map_circle_menu);
         circleMenu.setMainMenu(Color.parseColor("#ffffff"), R.drawable.ic_edit_menu_24dp, R.mipmap.icon_cancel);
         circleMenu.addSubMenu(Color.parseColor("#258CFF"), R.drawable.ic_building_white_24dp)
-                  .addSubMenu(Color.parseColor("#30A400"), R.drawable.ic_traffic_white_48dp)
-                  .addSubMenu(Color.parseColor("#FF4B32"), R.drawable.ic_line_white_24dp)
-                  .addSubMenu(Color.parseColor("#8A39FF"), R.drawable.ic_atm_white_24dp)
-                  .addSubMenu(Color.parseColor("#FF6A00"), R.drawable.ic_hospital_white_24dp)
-                  .addSubMenu(Color.parseColor("#FF0000"), R.drawable.ic_undo_black_24dp);
+                .addSubMenu(Color.parseColor("#30A400"), R.drawable.ic_traffic_white_48dp)
+                .addSubMenu(Color.parseColor("#FF4B32"), R.drawable.ic_line_white_24dp)
+                .addSubMenu(Color.parseColor("#8A39FF"), R.drawable.ic_atm_white_24dp)
+                .addSubMenu(Color.parseColor("#FF6A00"), R.drawable.ic_hospital_white_24dp)
+                .addSubMenu(Color.parseColor("#FF0000"), R.drawable.ic_undo_black_24dp);
 
         circleMenu.setOnMenuSelectedListener(new OnMenuSelectedListener() {
             @Override
@@ -211,14 +220,14 @@ public class MapActivity extends AppCompatActivity {
         saveMapDialog.setContentView(R.layout.map_save_dialog);
 
         // Dismiss save map dialog
-        closeDialog = (ImageButton)saveMapDialog.findViewById(R.id.map_save_close);
+        closeDialog = (ImageButton) saveMapDialog.findViewById(R.id.map_save_close);
         closeDialog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 saveMapDialog.dismiss();
             }
         });
-        cancelSaveMapBtn = (Button)saveMapDialog.findViewById(R.id.map_save_cancel);
+        cancelSaveMapBtn = (Button) saveMapDialog.findViewById(R.id.map_save_cancel);
         cancelSaveMapBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -228,13 +237,13 @@ public class MapActivity extends AppCompatActivity {
 
         // Map info
         db = new Database(this);
-        mapName = (EditText)saveMapDialog.findViewById(R.id.save_map_title);
-        mapCity = (EditText)saveMapDialog.findViewById(R.id.save_map_city);
-        mapOwner = (EditText)saveMapDialog.findViewById(R.id.save_map_owner);
-        mapDescription = (EditText)saveMapDialog.findViewById(R.id.save_map_description);
-        mapDate = (EditText)saveMapDialog.findViewById(R.id.save_map_date);
+        mapName = (EditText) saveMapDialog.findViewById(R.id.save_map_title);
+        mapCity = (EditText) saveMapDialog.findViewById(R.id.save_map_city);
+        mapOwner = (EditText) saveMapDialog.findViewById(R.id.save_map_owner);
+        mapDescription = (EditText) saveMapDialog.findViewById(R.id.save_map_description);
+        mapDate = (EditText) saveMapDialog.findViewById(R.id.save_map_date);
 
-        confirmSaveMapBtn = (Button)saveMapDialog.findViewById(R.id.map_save_confirm);
+        confirmSaveMapBtn = (Button) saveMapDialog.findViewById(R.id.map_save_confirm);
         confirmSaveMapBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -307,8 +316,7 @@ public class MapActivity extends AppCompatActivity {
         map_view = (MapView) findViewById(R.id.mapview);
         map_view.setTileSource(TileSourceFactory.MAPNIK);
         // Enable map clickable
-//        map_view.setClickable(true);
-
+        map_view.setClickable(true);
         // Disable builtin zoom controller
         map_view.setBuiltInZoomControls(false);
         // Enable touch control
@@ -322,40 +330,38 @@ public class MapActivity extends AppCompatActivity {
         // Compass
         CompassOverlay compassOverlay = new CompassOverlay(this, new InternalCompassOrientationProvider(this), map_view);
         compassOverlay.enableCompass();
-        compassOverlay.setCompassCenter(10,10);
+        compassOverlay.setCompassCenter(30, 55);
         map_view.getOverlays().add(compassOverlay);
         // Scale Bar
         ScaleBarOverlay scaleBarOverlay = new ScaleBarOverlay(map_view);
         scaleBarOverlay.setCentred(true);
         scaleBarOverlay.setScaleBarOffset(this.getResources().getDisplayMetrics().widthPixels / 2, 10);
         map_view.getOverlays().add(scaleBarOverlay);
-    }
+        // Location
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        locationUpdateHelper = new OsmLocationUpdateHelper(this);
+        Location location = null;
 
-    // Get coordinates listener
-    private class MyLocationListner implements LocationListener {
-        @Override
-        public void onLocationChanged(Location location) {
-            Toast.makeText(getBaseContext(), "Location changed: Lat: " + location.getLatitude() + " Lng: " + location.getLongitude(), Toast.LENGTH_LONG).show();
-            currentLocation = location;
+        for (String provider : locationManager.getProviders(true)) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            location = locationManager.getLastKnownLocation(provider);
             if (location != null) {
-                map_view.getController().setCenter(new GeoPoint(location));
+                locationManager.requestLocationUpdates(provider, 0, 0,locationUpdateHelper);
+                break;
             }
         }
 
-        @Override
-        public void onStatusChanged(String s, int i, Bundle bundle) {
-
+        if (location == null) {
+            location = new Location(LocationManager.GPS_PROVIDER);
+            location.setLatitude(DEFAULT_LATITUDE);
+            location.setLongitude(DEFAULT_LONGITUDE);
+            updateCurrentLocation(new GeoPoint(location));
         }
+    }
 
-        @Override
-        public void onProviderEnabled(String s) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String s) {
-
-        }
+    public void updateCurrentLocation(GeoPoint geoPoint) {
     }
 
     // Bottom navigation bar function
