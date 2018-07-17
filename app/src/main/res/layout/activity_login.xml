@@ -28,7 +28,7 @@
                 android:layout_marginBottom="20dp"
                 android:layout_marginTop="48dp"
                 android:padding="16dp"
-                android:src="@drawable/ic_login_love"
+                android:src="@drawable/ic_login_icon"
                 tools:ignore="ContentDescription" />
 
             <EditText
@@ -77,7 +77,7 @@
                 android:id="@+id/login_remember"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="12dp"
                 android:padding="8dp"
                 android:text="@string/login_rememberMe"
                 android:textColor="#fff" />
@@ -97,12 +97,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:background="@drawable/login_login_btn"
+                android:background="@drawable/style_login_login_btn"
                 android:clickable="true"
                 android:padding="16dp"
                 android:text="@string/log_in"
                 android:textAllCaps="false"
-                android:textColor="@android:color/background_dark"
+                android:textColor="#fff"
                 android:textSize="18sp"
                 android:focusable="true" />
 
@@ -112,12 +112,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:background="@drawable/login_login_btn"
+                android:background="@drawable/style_login_signup_btn"
                 android:clickable="true"
                 android:padding="16dp"
                 android:text="@string/sign_up"
                 android:textAllCaps="false"
-                android:textColor="@android:color/background_dark"
+                android:textColor="#fff"
                 android:textSize="18sp"
                 android:focusable="true" />
 
