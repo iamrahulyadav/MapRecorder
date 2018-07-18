@@ -14,9 +14,10 @@ import android.widget.TextView;
 import java.util.HashMap;
 
 public class AccountActivity extends AppCompatActivity {
-    Button btnLogout;
-    Button btnOpenMap;
-    private TextView username;
+    Button btnLogout, btnSettings;
+    TextView username, mapCount;
+
+    Database db;
     // user session
     UserSessionManager session;
     @Override
@@ -38,8 +39,23 @@ public class AccountActivity extends AppCompatActivity {
         String userEmail = user.get(UserSessionManager.KEY_EMAIL);
 
         // Show user name
-        username = (TextView) findViewById(R.id.account_page_username);
+        username = (TextView)findViewById(R.id.account_page_username);
         username.setText(userEmail);
+
+        // Get map number
+//        db.getMapCount();
+        mapCount = (TextView)findViewById(R.id.account_page_map_count);
+        mapCount.setText("3");
+
+        // Settings
+        btnSettings = (Button)findViewById(R.id.btn_app_settings);
+        btnSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent_edit = new Intent(AccountActivity.this, SettingsActivity.class);
+                startActivity(intent_edit);
+            }
+        });
 
         // Btn logout
         btnLogout = (Button)findViewById(R.id.btn_logout);

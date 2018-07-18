@@ -26,6 +26,7 @@ public class Database extends SQLiteOpenHelper {
     private static final String MAP_COL_DESCRIPTION = "description";
     private static final String MAP_COL_OWNER = "owner";
     private static final String MAP_COL_DATE = "date";
+    private static final String MAP_COL_CREATOR = "creator";
     private static final String MAP_COL_TRACKING = "tracking";
 
     public Database(Context context) {
@@ -35,7 +36,7 @@ public class Database extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("Create table user(id INTEGER PRIMARY KEY AUTOINCREMENT, email text, password text)");
-        db.execSQL("Create table map(id INTEGER PRIMARY KEY AUTOINCREMENT, name text, city text, description text, owner text, date text, tracking text)");
+        db.execSQL("Create table map(id INTEGER PRIMARY KEY AUTOINCREMENT, name text, city text, description text, owner text, date text, creator text, tracking text)");
     }
 
     @Override
@@ -70,7 +71,7 @@ public class Database extends SQLiteOpenHelper {
     }
 
     // save map to db
-    public boolean saveMap(String name, String city, String description, String owner, String date, String tracking) {
+    public boolean saveMap(String name, String city, String description, String owner, String date, String creator, String tracking) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(MAP_COL_NAME, name);
@@ -78,6 +79,7 @@ public class Database extends SQLiteOpenHelper {
         contentValues.put(MAP_COL_DESCRIPTION, description);
         contentValues.put(MAP_COL_OWNER, owner);
         contentValues.put(MAP_COL_DATE, date);
+        contentValues.put(MAP_COL_CREATOR, creator);
         contentValues.put(MAP_COL_TRACKING, tracking);
         long ins = db.insert(TABLE_MAP, null, contentValues);
         if (ins==-1) return false;
@@ -86,9 +88,14 @@ public class Database extends SQLiteOpenHelper {
 
     // get table data
     public Cursor getTableItems() {
-        SQLiteDatabase db = this.getWritableDatabase();
-        Cursor data = db.rawQuery("select * from " + TABLE_MAP, null);
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor data = db.rawQuery("select * from map", null);
         return data;
     }
 
+    public int getMapCount() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query("map", new String[]{"map1"},"name", null, null, null, null);
+        return cursor.getCount();
+    }
 }

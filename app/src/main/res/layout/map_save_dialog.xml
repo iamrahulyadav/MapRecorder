@@ -46,7 +46,7 @@
             android:maxLines="1"
             android:padding="8dp"
             android:textColor="#000"
-            android:textColorHint="#000" />
+            android:textColorHint="#777777" />
         <EditText
             android:id="@+id/save_map_city"
             android:layout_marginLeft="20dp"
@@ -62,7 +62,7 @@
             android:textColor="#000"
             android:maxLines="1"
             android:padding="8dp"
-            android:textColorHint="#000" />
+            android:textColorHint="#777777" />
         <EditText
             android:id="@+id/save_map_owner"
             android:layout_marginLeft="20dp"
@@ -78,7 +78,7 @@
             android:textColor="#000"
             android:maxLines="1"
             android:padding="8dp"
-            android:textColorHint="#000" />
+            android:textColorHint="#777777" />
         <EditText
             android:id="@+id/save_map_date"
             android:layout_marginLeft="20dp"
@@ -94,7 +94,7 @@
             android:textColor="#000"
             android:maxLines="1"
             android:padding="8dp"
-            android:textColorHint="#000" />
+            android:textColorHint="#777777" />
         <EditText
             android:id="@+id/save_map_description"
             android:layout_marginLeft="20dp"
@@ -110,7 +110,7 @@
             android:textColor="#000"
             android:maxLines="1"
             android:padding="8dp"
-            android:textColorHint="#000" />
+            android:textColorHint="#777777" />
     </LinearLayout>
 
     <LinearLayout

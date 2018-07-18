@@ -63,6 +63,7 @@ import com.hitomi.cmlibrary.OnMenuSelectedListener;
 import com.hitomi.cmlibrary.OnMenuStatusChangeListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class MapActivity extends AppCompatActivity {
     final private double DEFAULT_LATITUDE = 44.445883;
@@ -253,11 +254,14 @@ public class MapActivity extends AppCompatActivity {
                 String description = mapDescription.getText().toString();
                 String date = mapDate.getText().toString();
                 String tracking = "gps file path";
+                // get user data
+                HashMap<String, String> user = session.getUserDetails();
+                String creator = user.get(UserSessionManager.KEY_EMAIL);
 
                 if (name.equals("")) {
                     Toast.makeText(getBaseContext(), "Map name should not be empty", Toast.LENGTH_SHORT).show();
                 } else {
-                    Boolean insert = db.saveMap(name, city, description, owner, date, tracking);
+                    Boolean insert = db.saveMap(name, city, description, owner, date, creator, tracking);
                     if (insert) {
                         Toast.makeText(getBaseContext(), "Save map info successfully", Toast.LENGTH_SHORT).show();
                         saveMapDialog.dismiss();

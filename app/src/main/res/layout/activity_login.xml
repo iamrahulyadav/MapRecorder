@@ -41,10 +41,11 @@
                 android:drawablePadding="12dp"
                 android:drawableStart="@drawable/ic_person_white_24dp"
                 android:ems="10"
-                android:hint="@string/login_email"
+                android:hint="@string/login_username"
                 android:inputType="textEmailAddress"
                 android:maxLines="1"
                 android:padding="8dp"
+                android:textColor="#fff"
                 android:textColorHint="#fff" />
 
             <View
@@ -66,6 +67,7 @@
                 android:inputType="textPassword"
                 android:maxLines="1"
                 android:padding="8dp"
+                android:textColor="#fff"
                 android:textColorHint="#fff" />
 
             <View

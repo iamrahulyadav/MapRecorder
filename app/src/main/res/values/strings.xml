@@ -37,4 +37,6 @@
     <string name="map_control_location">Location</string>
     <string name="map_control_edit">Edit Map</string>
     <string name="map_control_undo">Undo Change</string>
+    <string name="login_username">Username</string>
+    <string name="search_text">Search...</string>
 </resources>

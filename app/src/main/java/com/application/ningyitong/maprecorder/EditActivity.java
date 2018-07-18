@@ -26,10 +26,9 @@ public class EditActivity extends AppCompatActivity {
     private ArrayList<HashMap<String, String>> mapList;
     private ListView listView;
 
-    private String res;
-
     // user session
     UserSessionManager session;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,8 +44,6 @@ public class EditActivity extends AppCompatActivity {
 
         // Create list view
         listView = (ListView)findViewById(R.id.mapDataList);
-//        CustomAdapter customAdapter = new CustomAdapter();
-//        listView.setAdapter(customAdapter);
         mapList = new ArrayList<>();
 
         // Load local map list
@@ -90,38 +87,6 @@ public class EditActivity extends AppCompatActivity {
         MenuItem menuItem = menu.getItem(2);
         menuItem.setChecked(true);
     }
-
-//    private class CustomAdapter extends BaseAdapter {
-//
-//        @Override
-//        public int getCount() {
-//            return 1;
-//        }
-//
-//        @Override
-//        public Object getItem(int i) {
-//            return null;
-//        }
-//
-//        @Override
-//        public long getItemId(int i) {
-//            return 0;
-//        }
-//
-//        @Override
-//        public View getView(int i, View view, ViewGroup viewGroup) {
-//            view = getLayoutInflater().inflate(R.layout.map_listview_items, null);
-//
-//            ImageView imageView = (ImageView)view.findViewById(R.id.list_item_image);
-//            TextView textView_name = (TextView)view.findViewById(R.id.list_item_map_name);
-//            TextView textView_description = (TextView)view.findViewById(R.id.list_item_map_description);
-//
-//            imageView.setImageResource(R.drawable.ic_map_black_24dp);
-//            textView_name.setText("Map Name");
-//            textView_description.setText("This is the description for the map.");
-//            return view;
-//        }
-//    }
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
