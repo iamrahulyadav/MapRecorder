@@ -62,37 +62,32 @@ public class MainActivity extends Activity {
     }
 
     private void loadMapList() {
-        //TODO
-//        db = new Database(this);
-//        Cursor mapItems = db.getTableItems();
-//        mapList.clear();
-//        if (mapItems.getCount()>0) {
-//            mapItems.moveToFirst();
-//            for (int i=0; i<mapItems.getCount(); i++) {
-//                String listName = mapItems.getString(mapItems.getColumnIndex("name"));
-//                String listOwner = mapItems.getString(mapItems.getColumnIndex("owner"));
-//                String listDescription = mapItems.getString(mapItems.getColumnIndex("description"));
-//                HashMap<String, String> maps = new HashMap<>();
-//                maps.put("name", listName);
-//                maps.put("owner", listOwner);
-//                maps.put("description", listDescription);
-//                mapList.add(maps);
-//                mapItems.moveToNext();
-//            }
-//            ListAdapter adapter = new SimpleAdapter(MainActivity.this,
-//                    mapList,
-//                    R.layout.map_listview_items,
-//                    new String[] {"name", "description"},
-//                    new int[] {R.id.list_item_map_name, R.id.list_item_map_description});
-//            listView.setAdapter(adapter);
-//        } else {
-//            listView.setAdapter(null);
-//            Toast.makeText(this, "No Map Data", Toast.LENGTH_SHORT).show();
-//        }
-    }
-
-    private void searchMap(String name) {
-        // TODO
+        db = new Database(this);
+        Cursor mapItems = db.getTableItems();
+        mapList.clear();
+        if (mapItems.getCount()>0) {
+            mapItems.moveToFirst();
+            for (int i=0; i<mapItems.getCount(); i++) {
+                String listName = mapItems.getString(mapItems.getColumnIndex("name"));
+                String listOwner = mapItems.getString(mapItems.getColumnIndex("owner"));
+                String listDescription = mapItems.getString(mapItems.getColumnIndex("description"));
+                HashMap<String, String> maps = new HashMap<>();
+                maps.put("name", listName);
+                maps.put("owner", listOwner);
+                maps.put("description", listDescription);
+                mapList.add(maps);
+                mapItems.moveToNext();
+            }
+            ListAdapter adapter = new SimpleAdapter(MainActivity.this,
+                    mapList,
+                    R.layout.map_listview_items,
+                    new String[] {"name", "description"},
+                    new int[] {R.id.list_item_map_name, R.id.list_item_map_description});
+            listView.setAdapter(adapter);
+        } else {
+            listView.setAdapter(null);
+            Toast.makeText(this, "No Map Data", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void setupBottomNavbar() {

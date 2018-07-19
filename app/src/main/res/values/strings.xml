@@ -39,4 +39,5 @@
     <string name="map_control_undo">Undo Change</string>
     <string name="login_username">Username</string>
     <string name="search_text">Search...</string>
+    <string name="edit_page_search_text">Search...</string>
 </resources>

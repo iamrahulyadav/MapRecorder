@@ -3,8 +3,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:focusableInTouchMode="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#fbf4ed"
     tools:context=".EditActivity">
 
     <RelativeLayout
@@ -13,19 +15,18 @@
         android:orientation="vertical">
 
         <EditText
-            android:id="@+id/man_page_search_text"
+            android:id="@+id/edit_page_search_text"
             android:layout_width="321dp"
             android:layout_height="65dp"
             android:layout_weight="1"
-            android:focusedByDefault="false"
             android:ems="10"
-            android:hint="Search..."
+            android:hint="@string/edit_page_search_text"
             android:inputType="text"
             android:singleLine="false"
             android:textColorHint="#777777" />
 
         <ImageButton
-            android:id="@+id/main_page_search_btn"
+            android:id="@+id/edit_page_search_btn"
             android:layout_width="65dp"
             android:layout_height="65dp"
             android:layout_alignParentEnd="true"

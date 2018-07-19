@@ -82,7 +82,8 @@
                 android:layout_marginTop="12dp"
                 android:padding="8dp"
                 android:text="@string/login_rememberMe"
-                android:textColor="#fff" />
+                android:textColor="#fff"
+                android:buttonTint="#fff" />
 
             <CheckBox
                 android:id="@+id/login_keepSignIn"
@@ -91,7 +92,8 @@
                 android:layout_marginTop="8dp"
                 android:padding="8dp"
                 android:text="@string/login_keepSignIn"
-                android:textColor="#fff" />
+                android:textColor="#fff"
+                android:buttonTint="#fff"/>
 
             <Button
                 android:id="@+id/login_loginBtn"

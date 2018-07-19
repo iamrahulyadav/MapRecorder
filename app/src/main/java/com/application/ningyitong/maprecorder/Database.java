@@ -93,9 +93,10 @@ public class Database extends SQLiteOpenHelper {
         return data;
     }
 
-    public int getMapCount() {
+    public Cursor searchMapByCity(String col, String city) {
+        col = "name";
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.query("map", new String[]{"map1"},"name", null, null, null, null);
-        return cursor.getCount();
+        Cursor data = db.rawQuery("select * from map where " + col + "=?", new String[]{city});
+        return data;
     }
 }
