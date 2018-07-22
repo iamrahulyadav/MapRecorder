@@ -5,9 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".SettingsActivity">
-
-
+    tools:context=".EditProfileActivity">
 
     <TextView
         android:layout_width="match_parent"
@@ -15,15 +13,15 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
         android:gravity="center"
-        android:text="Settings"
+        android:text="Edit Profile"
         android:textColor="#fff"
         android:textSize="20sp"
         android:textStyle="bold"
         android:layout_alignParentLeft="true"
-        android:background="#4851b8" />
+        android:background="#6db848" />
 
     <ImageButton
-        android:id="@+id/settings_page_back_btn"
+        android:id="@+id/edit_profile_page_back_btn"
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_alignParentLeft="true"

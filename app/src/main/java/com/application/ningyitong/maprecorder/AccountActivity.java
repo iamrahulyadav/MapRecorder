@@ -1,5 +1,7 @@
 package com.application.ningyitong.maprecorder;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -14,7 +16,7 @@ import android.widget.TextView;
 import java.util.HashMap;
 
 public class AccountActivity extends AppCompatActivity {
-    Button btnLogout, btnSettings;
+    Button btnLogout, btnSettings, btnEditProfile;
     TextView username, mapCount;
 
     Database db;
@@ -47,6 +49,16 @@ public class AccountActivity extends AppCompatActivity {
         mapCount = (TextView)findViewById(R.id.account_page_map_count);
         mapCount.setText("3");
 
+        // Edit profile
+        btnEditProfile = (Button)findViewById(R.id.btn_edit_profile);
+        btnEditProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent_edit = new Intent(AccountActivity.this, EditProfileActivity.class);
+                startActivity(intent_edit);
+            }
+        });
+
         // Settings
         btnSettings = (Button)findViewById(R.id.btn_app_settings);
         btnSettings.setOnClickListener(new View.OnClickListener() {
@@ -63,9 +75,35 @@ public class AccountActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 btnLogout.setAlpha((float) 0.5);
+                // Call confirmation dialog
+                signOutConfirmationDialog();
+            }
+        });
+    }
+
+    // Sign out confirmation dialog
+    public void signOutConfirmationDialog() {
+        final AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+        alertDialog.setMessage("Are you sure you want to log out?");
+        alertDialog.setCancelable(false);
+
+        // Confirm log out
+        alertDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
                 session.logoutUser();
             }
         });
+
+        // Cancel operation
+        alertDialog.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                btnLogout.setAlpha((float) 1);
+            }
+        });
+
+        alertDialog.create().show();
     }
 
     // Setup nav-bar

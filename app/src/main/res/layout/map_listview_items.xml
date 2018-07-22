@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#fbf4ed"
+    android:background="@drawable/style_list_item"
     android:orientation="horizontal"
     android:gravity="center|left"
     android:padding="10dp">
@@ -26,16 +26,39 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/list_item_map_name"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_marginLeft="10dp"
-            android:gravity="top"
-            android:text="TextView"
+            android:orientation="horizontal">
 
-            android:textSize="18sp" />
+            <TextView
+                android:id="@+id/list_item_map_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_marginLeft="10dp"
+                android:gravity="top"
+                android:text="TextView"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/list_item_map_city"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_marginLeft="10dp"
+                android:gravity="top"
+                android:text="TextView"
+                android:textSize="18sp" />
+
+        </LinearLayout>
+        <TextView
+            android:id="@+id/list_item_map_owner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="TextView"
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/list_item_map_description"

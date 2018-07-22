@@ -16,14 +16,27 @@
 
         <EditText
             android:id="@+id/edit_page_search_text"
-            android:layout_width="321dp"
+            android:layout_width="wrap_content"
             android:layout_height="65dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:paddingLeft="5dp"
             android:layout_weight="1"
             android:ems="10"
             android:hint="@string/edit_page_search_text"
             android:inputType="text"
             android:singleLine="false"
-            android:textColorHint="#777777" />
+            android:textColorHint="#777777"
+            android:layout_alignParentLeft="true" />
+
+        <Spinner
+            android:id="@+id/edit_page_search_dropdown"
+            android:layout_width="120dp"
+            android:layout_height="65dp"
+            android:layout_alignParentTop="true"
+            android:layout_toStartOf="@+id/edit_page_search_btn"
+            android:layout_toLeftOf="@+id/edit_page_search_btn"
+            android:entries="@array/search_type" />
 
         <ImageButton
             android:id="@+id/edit_page_search_btn"
@@ -52,9 +65,11 @@
         android:id="@+id/mapDataList"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="65dp"
+        android:layout_marginTop="70dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true" />
+        android:layout_alignParentLeft="true"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="10.0sp" />
 
 </RelativeLayout>

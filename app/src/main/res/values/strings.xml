@@ -40,4 +40,11 @@
     <string name="login_username">Username</string>
     <string name="search_text">Search...</string>
     <string name="edit_page_search_text">Search...</string>
+
+    // Array
+    <string-array name="search_type">
+        <item>name</item>
+        <item>city</item>
+        <item>owner</item>
+    </string-array>
 </resources>

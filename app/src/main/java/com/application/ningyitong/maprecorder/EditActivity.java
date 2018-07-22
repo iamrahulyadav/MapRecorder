@@ -17,16 +17,19 @@ import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class EditActivity extends AppCompatActivity {
     Database db;
     EditText searchText;
     ImageView searchBtn;
+    Spinner searchType;
     private ArrayList<HashMap<String, String>> mapList;
     private ListView listView;
 
@@ -48,15 +51,21 @@ public class EditActivity extends AppCompatActivity {
 
         // Create search bar
         searchText = (EditText)findViewById(R.id.edit_page_search_text);
+        // Create search type spinner;
+        createSearchTypeSpinner();
+        // Create search button
         searchBtn = (ImageButton)findViewById(R.id.edit_page_search_btn);
         searchBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String searchContent = searchText.getText().toString();
-                if (searchContent=="" || searchContent==null) {
+                if (searchContent.equals("") || searchContent.equals("Search...")) {
                     loadMapList();
+                    Toast.makeText(getBaseContext(), "No search content detected, show all map list", Toast.LENGTH_LONG).show();
                 } else {
-                    searchMapByCity(searchContent);
+                    String searchTypeContent = searchType.getSelectedItem().toString();
+                    searchMapByType(searchContent, searchTypeContent);
+                    Toast.makeText(getBaseContext(), "Search Content: " + searchContent + "; search type: " + searchTypeContent, Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -69,6 +78,11 @@ public class EditActivity extends AppCompatActivity {
         loadMapList();
     }
 
+    // Create search type spinner
+    private void createSearchTypeSpinner() {
+        searchType = (Spinner)findViewById(R.id.edit_page_search_dropdown);
+    }
+
     private void loadMapList() {
         db = new Database(this);
         Cursor mapItems = db.getTableItems();
@@ -77,11 +91,13 @@ public class EditActivity extends AppCompatActivity {
             mapItems.moveToFirst();
             for (int i=0; i<mapItems.getCount(); i++) {
                 String listName = mapItems.getString(mapItems.getColumnIndex("name"));
-                String listOwner = mapItems.getString(mapItems.getColumnIndex("owner"));
+                String listOwner = "Owner: " + mapItems.getString(mapItems.getColumnIndex("owner"));
+                String listCity = "City: " + mapItems.getString(mapItems.getColumnIndex("city"));
                 String listDescription = mapItems.getString(mapItems.getColumnIndex("description"));
                 HashMap<String, String> maps = new HashMap<>();
                 maps.put("name", listName);
                 maps.put("owner", listOwner);
+                maps.put("city", listCity);
                 maps.put("description", listDescription);
                 mapList.add(maps);
                 mapItems.moveToNext();
@@ -89,8 +105,8 @@ public class EditActivity extends AppCompatActivity {
             ListAdapter adapter = new SimpleAdapter(EditActivity.this,
                     mapList,
                     R.layout.map_listview_items,
-                    new String[] {"name", "description"},
-                    new int[] {R.id.list_item_map_name, R.id.list_item_map_description});
+                    new String[] {"name", "city", "owner", "description"},
+                    new int[] {R.id.list_item_map_name, R.id.list_item_map_city, R.id.list_item_map_owner, R.id.list_item_map_description});
             listView.setAdapter(adapter);
         } else {
             listView.setAdapter(null);
@@ -98,20 +114,21 @@ public class EditActivity extends AppCompatActivity {
         }
     }
 
-    private void searchMapByCity(String city) {
+    private void searchMapByType(String searchContent, String searchTypeContent) {
         db = new Database(this);
-        String col = "city";
-        Cursor mapItems = db.searchMapByCity(col, city);
+        Cursor mapItems = db.searchMapByCity(searchContent, searchTypeContent);
         mapList.clear();
         if (mapItems.getCount()>0) {
             mapItems.moveToFirst();
             for (int i=0; i<mapItems.getCount(); i++) {
                 String listName = mapItems.getString(mapItems.getColumnIndex("name"));
-                String listOwner = mapItems.getString(mapItems.getColumnIndex("owner"));
+                String listOwner = "Owner: " + mapItems.getString(mapItems.getColumnIndex("owner"));
+                String listCity = "City: " + mapItems.getString(mapItems.getColumnIndex("city"));
                 String listDescription = mapItems.getString(mapItems.getColumnIndex("description"));
                 HashMap<String, String> maps = new HashMap<>();
                 maps.put("name", listName);
                 maps.put("owner", listOwner);
+                maps.put("city", listCity);
                 maps.put("description", listDescription);
                 mapList.add(maps);
                 mapItems.moveToNext();
@@ -119,8 +136,8 @@ public class EditActivity extends AppCompatActivity {
             ListAdapter adapter = new SimpleAdapter(EditActivity.this,
                     mapList,
                     R.layout.map_listview_items,
-                    new String[] {"name", "description"},
-                    new int[] {R.id.list_item_map_name, R.id.list_item_map_description});
+                    new String[] {"name", "city", "owner", "description"},
+                    new int[] {R.id.list_item_map_name, R.id.list_item_map_city, R.id.list_item_map_owner, R.id.list_item_map_description});
             listView.setAdapter(adapter);
         } else {
             listView.setAdapter(null);
