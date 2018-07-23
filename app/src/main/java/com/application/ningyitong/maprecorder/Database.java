@@ -89,14 +89,19 @@ public class Database extends SQLiteOpenHelper {
     // get table data
     public Cursor getTableItems() {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor data = db.rawQuery("select * from map", null);
+        Cursor data = db.rawQuery("SELECT * FROM map", null);
         return data;
     }
 
     public Cursor searchMapByCity(String searchContent, String searchTypeContent) {
         SQLiteDatabase db = this.getReadableDatabase();
-//        Cursor data = db.rawQuery("select * from map where name=?", new String[]{searchContent});
-        Cursor data = db.rawQuery("select * from map where " + searchTypeContent + "=?", new String[]{searchContent});
+        Cursor data = db.rawQuery("SELECT * FROM map WHERE " + searchTypeContent + "=?", new String[]{searchContent});
+        return data;
+    }
+
+    public Cursor getItemID(String name) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor data = db.rawQuery("SELECT * FROM map WHERE name=?", new String[]{name});
         return data;
     }
 }

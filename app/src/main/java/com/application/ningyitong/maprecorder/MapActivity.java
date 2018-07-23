@@ -74,7 +74,7 @@ public class MapActivity extends AppCompatActivity {
     private MapController mapController;
     private CircleMenu circleMenu;
     private ImageButton recordingGpsBtn;
-    private Boolean isRecording = false;
+    public Boolean isRecording = false;
     private Dialog saveMapDialog;
 
     // Location API
@@ -366,6 +366,8 @@ public class MapActivity extends AppCompatActivity {
     }
 
     public void updateCurrentLocation(GeoPoint geoPoint) {
+        Toast.makeText(getBaseContext(), "Latitude = " + geoPoint.getLatitude() * 1e6 + " Longitude = " + geoPoint.getLongitude() * 1e6, Toast.LENGTH_SHORT).show();
+
     }
 
     // Bottom navigation bar function

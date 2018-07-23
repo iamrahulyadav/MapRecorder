@@ -6,10 +6,12 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -73,6 +75,19 @@ public class EditActivity extends AppCompatActivity {
         // Create list view
         listView = (ListView)findViewById(R.id.mapDataList);
         mapList = new ArrayList<>();
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                String item = listView.getItemAtPosition(i).toString();
+                Toast.makeText(getBaseContext(), item, Toast.LENGTH_SHORT).show();
+                String[] mapInfo = item.split("\\S*,\\S*");
+                String name = mapInfo[2].replace("name=", "");
+                Toast.makeText(getBaseContext(), name, Toast.LENGTH_SHORT).show();
+                Cursor data = db.getItemID(name);
+
+            }
+        });
 
         // Load local map list
         loadMapList();
