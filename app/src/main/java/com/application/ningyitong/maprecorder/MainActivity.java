@@ -54,7 +54,7 @@ public class MainActivity extends Activity {
         setupBottomNavbar();
 
         // Create list view
-        listView = (ListView)findViewById(R.id.mapDataList);
+        listView = (ListView)findViewById(R.id.mapDataList_main);
         mapList = new ArrayList<>();
 
         // Load local map list
@@ -69,11 +69,13 @@ public class MainActivity extends Activity {
             mapItems.moveToFirst();
             for (int i=0; i<mapItems.getCount(); i++) {
                 String listName = mapItems.getString(mapItems.getColumnIndex("name"));
-                String listOwner = mapItems.getString(mapItems.getColumnIndex("owner"));
+                String listOwner = "Owner: " + mapItems.getString(mapItems.getColumnIndex("owner"));
+                String listCity = "City: " + mapItems.getString(mapItems.getColumnIndex("city"));
                 String listDescription = mapItems.getString(mapItems.getColumnIndex("description"));
                 HashMap<String, String> maps = new HashMap<>();
                 maps.put("name", listName);
                 maps.put("owner", listOwner);
+                maps.put("city", listCity);
                 maps.put("description", listDescription);
                 mapList.add(maps);
                 mapItems.moveToNext();
@@ -81,8 +83,8 @@ public class MainActivity extends Activity {
             ListAdapter adapter = new SimpleAdapter(MainActivity.this,
                     mapList,
                     R.layout.map_listview_items,
-                    new String[] {"name", "description"},
-                    new int[] {R.id.list_item_map_name, R.id.list_item_map_description});
+                    new String[] {"name", "city", "owner", "description"},
+                    new int[] {R.id.list_item_map_name, R.id.list_item_map_city, R.id.list_item_map_owner, R.id.list_item_map_description});
             listView.setAdapter(adapter);
         } else {
             listView.setAdapter(null);
