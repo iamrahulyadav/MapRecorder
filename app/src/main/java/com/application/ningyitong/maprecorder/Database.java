@@ -70,6 +70,14 @@ public class Database extends SQLiteOpenHelper {
         else return false;
     }
 
+    // checking if email exists
+    public Boolean checkMap(String name) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("Select * from map where name=?", new String[]{name});
+        if (cursor.getCount()>0) return false;
+        else return true;
+    }
+
     // save map to db
     public boolean saveMap(String name, String city, String description, String owner, String date, String creator, String tracking) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -93,15 +101,37 @@ public class Database extends SQLiteOpenHelper {
         return data;
     }
 
-    public Cursor searchMapByCity(String searchContent, String searchTypeContent) {
+    // Search map by custom col
+    public Cursor searchMapByType(String searchContent, String searchTypeContent) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor data = db.rawQuery("SELECT * FROM map WHERE " + searchTypeContent + "=?", new String[]{searchContent});
         return data;
     }
 
+    // Get map id by map name
     public Cursor getItemID(String name) {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor data = db.rawQuery("SELECT * FROM map WHERE name=?", new String[]{name});
         return data;
     }
+
+    // Get map details by id
+    public Cursor getMapInfoById(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor data = db.rawQuery("SELECT * FROM map WHERE id=" + id, null);
+        return data;
+    }
+
+    // Update map by id
+    public void updateMapInfo(String newName, String newCity, String newOwner, String newDate, String newDescription, int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("UPDATE map SET name='"+newName+"', city='"+newCity+"', owner='"+newOwner+"', date='"+newDate+"', description='"+newDescription+"' WHERE id=" + id);
+    }
+
+    // Delete map by id
+    public void deleteMap(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DELETE FROM map where id=" + id);
+    }
+
 }

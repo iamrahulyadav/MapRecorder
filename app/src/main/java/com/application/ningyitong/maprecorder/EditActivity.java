@@ -79,13 +79,29 @@ public class EditActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                String item = listView.getItemAtPosition(i).toString();
-                Toast.makeText(getBaseContext(), item, Toast.LENGTH_SHORT).show();
-                String[] mapInfo = item.split("\\S*,\\S*");
-                String name = mapInfo[2].replace("name=", "");
-                Toast.makeText(getBaseContext(), name, Toast.LENGTH_SHORT).show();
+                // Get item string and remove the first character '{'
+                String item = listView.getItemAtPosition(i).toString().substring(1);
+//                Toast.makeText(getBaseContext(), item, Toast.LENGTH_SHORT).show();
+                // Divide string into 4 parts by ','
+                String[] mapInfo = item.split(",", 3);
+                // Get the map name
+                String name = mapInfo[0].replace("name=", "");
+//                Toast.makeText(getBaseContext(), name, Toast.LENGTH_SHORT).show();
                 Cursor data = db.getItemID(name);
 
+                int mapID = -1;
+                while (data.moveToNext()) {
+                    mapID = data.getInt(0);
+                }
+                if (mapID > -1) {
+//                    Toast.makeText(getBaseContext(), "Map ID is: " + mapID, Toast.LENGTH_SHORT).show();
+                    Intent editMapItemActivity = new Intent(EditActivity.this, EditMapItemActivity.class);
+                    editMapItemActivity.putExtra("id", mapID);
+                    editMapItemActivity.putExtra("name", name);
+                    startActivity(editMapItemActivity);
+                } else {
+                    Toast.makeText(getBaseContext(), "Cannot find the map", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -125,13 +141,13 @@ public class EditActivity extends AppCompatActivity {
             listView.setAdapter(adapter);
         } else {
             listView.setAdapter(null);
-            Toast.makeText(this, "No Map Data", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "No map data found", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void searchMapByType(String searchContent, String searchTypeContent) {
         db = new Database(this);
-        Cursor mapItems = db.searchMapByCity(searchContent, searchTypeContent);
+        Cursor mapItems = db.searchMapByType(searchContent, searchTypeContent);
         mapList.clear();
         if (mapItems.getCount()>0) {
             mapItems.moveToFirst();

@@ -261,12 +261,16 @@ public class MapActivity extends AppCompatActivity {
                 if (name.equals("")) {
                     Toast.makeText(getBaseContext(), "Map name should not be empty", Toast.LENGTH_SHORT).show();
                 } else {
-                    Boolean insert = db.saveMap(name, city, description, owner, date, creator, tracking);
-                    if (insert) {
-                        Toast.makeText(getBaseContext(), "Save map info successfully", Toast.LENGTH_SHORT).show();
-                        saveMapDialog.dismiss();
+                    if (db.checkMap(name)) {
+                        Boolean insert = db.saveMap(name, city, description, owner, date, creator, tracking);
+                        if (insert) {
+                            Toast.makeText(getBaseContext(), "Save map info successfully", Toast.LENGTH_SHORT).show();
+                            saveMapDialog.dismiss();
+                        } else {
+                            Toast.makeText(getBaseContext(), "Failed to save map data", Toast.LENGTH_SHORT).show();
+                        }
                     } else {
-                        Toast.makeText(getBaseContext(), "Failed to save map data", Toast.LENGTH_SHORT).show();
+                     Toast.makeText(getBaseContext(), "Map name exists, please change to another one.", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
