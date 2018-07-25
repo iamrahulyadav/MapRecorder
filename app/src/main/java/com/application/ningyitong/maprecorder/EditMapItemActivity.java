@@ -84,10 +84,14 @@ public class EditMapItemActivity extends AppCompatActivity {
                 String newDescription = mapDescription.getText().toString();
 
                 if (!newName.equals("")) {
-                    db.updateMapInfo(newName, newCity, newOwner, newDate, newDescription, selectedMapID);
-                    Toast.makeText(getBaseContext(), "Changes have been saved.", Toast.LENGTH_SHORT).show();
-                    Intent intent_edit = new Intent(EditMapItemActivity.this, EditActivity.class);
-                    startActivity(intent_edit);
+                    if (db.checkMap(newName)) {
+                        db.updateMapInfo(newName, newCity, newOwner, newDate, newDescription, selectedMapID);
+                        Toast.makeText(getBaseContext(), "Changes have been saved.", Toast.LENGTH_SHORT).show();
+                        Intent intent_edit = new Intent(EditMapItemActivity.this, EditActivity.class);
+                        startActivity(intent_edit);
+                    } else {
+                        Toast.makeText(getBaseContext(), "Map name exists, please change to another one.", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
                     Toast.makeText(getBaseContext(), "Map title cannot empty!", Toast.LENGTH_SHORT).show();
                 }

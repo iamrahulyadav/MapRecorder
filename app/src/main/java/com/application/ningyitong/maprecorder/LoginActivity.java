@@ -111,6 +111,14 @@ public class LoginActivity extends Activity implements TextWatcher, CompoundButt
         String email = etEmail.getText().toString();
         String password = etPassword.getText().toString();
 
+        if (email.equals("")) {
+            etEmail.setError("Input username");
+            return;
+        }
+        if (password.equals("")) {
+            etPassword.setError("Input password");
+            return;
+        }
         // verify user email and password
         Boolean loginValidation = db.loginValidation(email, password);
 

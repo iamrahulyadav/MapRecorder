@@ -37,23 +37,32 @@ public class RegisterActivity extends Activity {
                 String pass = passwordText.getText().toString();
                 String re_pass = confirmPasswordText.getText().toString();
 
-                if (email.equals("")||pass.equals("")||re_pass.equals("")) {
-                    Toast.makeText(getApplicationContext(), "Fields should not be empty", Toast.LENGTH_SHORT).show();
-                } else {
-                    if (pass.equals(re_pass)) {
-                        Boolean checkEmail = db.checkEmail(email);
-                        if (checkEmail) {
-                            Boolean insert = db.saveUser(email, pass);
-                            if (insert) {
-                                Toast.makeText(getApplicationContext(), "Registered Successfully", Toast.LENGTH_SHORT).show();
-                                renderToLogin();
-                            }
-                        } else {
-                            Toast.makeText(getApplicationContext(), "Email Already Exists", Toast.LENGTH_SHORT).show();
+                if (email.equals("")) {
+                    emailText.setError("Input username");
+                    return;
+                }
+                if (pass.equals("")) {
+                    passwordText.setError("Input password");
+                    return;
+                }
+                if (re_pass.equals("")) {
+                    confirmPasswordText.setError("Input confirm password");
+                    return;
+                }
+
+                if (pass.equals(re_pass)) {
+                    Boolean checkEmail = db.checkEmail(email);
+                    if (checkEmail) {
+                        Boolean insert = db.saveUser(email, pass);
+                        if (insert) {
+                            Toast.makeText(getApplicationContext(), "Registered Successfully", Toast.LENGTH_SHORT).show();
+                            renderToLogin();
                         }
                     } else {
-                        Toast.makeText(getApplicationContext(), "Password do not match", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "Email Already Exists", Toast.LENGTH_SHORT).show();
                     }
+                } else {
+                    Toast.makeText(getApplicationContext(), "Password do not match", Toast.LENGTH_SHORT).show();
                 }
             }
         });

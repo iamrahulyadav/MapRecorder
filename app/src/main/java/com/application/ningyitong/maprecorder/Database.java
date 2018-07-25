@@ -28,6 +28,7 @@ public class Database extends SQLiteOpenHelper {
     private static final String MAP_COL_DATE = "date";
     private static final String MAP_COL_CREATOR = "creator";
     private static final String MAP_COL_TRACKING = "tracking";
+    private static final String MAP_COL_USERID = "user_id";
 
     public Database(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -36,7 +37,7 @@ public class Database extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("Create table user(id INTEGER PRIMARY KEY AUTOINCREMENT, email text, password text)");
-        db.execSQL("Create table map(id INTEGER PRIMARY KEY AUTOINCREMENT, name text, city text, description text, owner text, date text, creator text, tracking text)");
+        db.execSQL("Create table map(id INTEGER PRIMARY KEY AUTOINCREMENT, name text, city text, description text, owner text, date text, creator text, tracking text, user_id INTEGER)");
     }
 
     @Override
@@ -78,8 +79,20 @@ public class Database extends SQLiteOpenHelper {
         else return true;
     }
 
+    // Get user id by user name
+    public Cursor getUserID(String name) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor data = db.rawQuery("SELECT * FROM user WHERE email=?", new String[]{name});
+        return data;
+    }
+    public Cursor getMapCount(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor data = db.rawQuery("Select * from user where email=?", new String[]{email});
+        return data;
+    }
+
     // save map to db
-    public boolean saveMap(String name, String city, String description, String owner, String date, String creator, String tracking) {
+    public boolean saveMap(String name, String city, String description, String owner, String date, String creator, String tracking, int user_id) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(MAP_COL_NAME, name);
@@ -89,6 +102,7 @@ public class Database extends SQLiteOpenHelper {
         contentValues.put(MAP_COL_DATE, date);
         contentValues.put(MAP_COL_CREATOR, creator);
         contentValues.put(MAP_COL_TRACKING, tracking);
+        contentValues.put(MAP_COL_USERID, user_id);
         long ins = db.insert(TABLE_MAP, null, contentValues);
         if (ins==-1) return false;
         else return true;
@@ -107,9 +121,14 @@ public class Database extends SQLiteOpenHelper {
         Cursor data = db.rawQuery("SELECT * FROM map WHERE " + searchTypeContent + "=?", new String[]{searchContent});
         return data;
     }
+    public Cursor searchMapByType(int searchContent, String searchTypeContent) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor data = db.rawQuery("SELECT * FROM map WHERE " + searchTypeContent + "=" + searchContent, null);
+        return data;
+    }
 
     // Get map id by map name
-    public Cursor getItemID(String name) {
+    public Cursor getMapID(String name) {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor data = db.rawQuery("SELECT * FROM map WHERE name=?", new String[]{name});
         return data;

@@ -87,8 +87,8 @@ public class EditActivity extends AppCompatActivity {
                 // Get the map name
                 String name = mapInfo[0].replace("name=", "");
 //                Toast.makeText(getBaseContext(), name, Toast.LENGTH_SHORT).show();
-                Cursor data = db.getItemID(name);
 
+                Cursor data = db.getMapID(name);
                 int mapID = -1;
                 while (data.moveToNext()) {
                     mapID = data.getInt(0);

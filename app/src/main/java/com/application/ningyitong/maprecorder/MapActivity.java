@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -244,25 +245,37 @@ public class MapActivity extends AppCompatActivity {
         mapDescription = (EditText) saveMapDialog.findViewById(R.id.save_map_description);
         mapDate = (EditText) saveMapDialog.findViewById(R.id.save_map_date);
 
-        confirmSaveMapBtn = (Button) saveMapDialog.findViewById(R.id.map_save_confirm);
-        confirmSaveMapBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String name = mapName.getText().toString();
-                String city = mapCity.getText().toString();
-                String owner = mapOwner.getText().toString();
-                String description = mapDescription.getText().toString();
-                String date = mapDate.getText().toString();
-                String tracking = "gps file path";
-                // get user data
-                HashMap<String, String> user = session.getUserDetails();
-                String creator = user.get(UserSessionManager.KEY_EMAIL);
 
-                if (name.equals("")) {
-                    Toast.makeText(getBaseContext(), "Map name should not be empty", Toast.LENGTH_SHORT).show();
-                } else {
+        // get user data
+        HashMap<String, String> user = session.getUserDetails();
+        String userEmail = user.get(UserSessionManager.KEY_EMAIL);
+        Cursor data = db.getUserID(userEmail);
+        int userID = -1;
+        while (data.moveToNext()) {
+            userID = data.getInt(0);
+        }
+        if (userID > -1) {
+            confirmSaveMapBtn = (Button) saveMapDialog.findViewById(R.id.map_save_confirm);
+            final int finalUserID = userID;
+            confirmSaveMapBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    String name = mapName.getText().toString();
+                    String city = mapCity.getText().toString();
+                    String owner = mapOwner.getText().toString();
+                    String description = mapDescription.getText().toString();
+                    String date = mapDate.getText().toString();
+                    String tracking = "gps file path";
+                    // get user data
+                    HashMap<String, String> user = session.getUserDetails();
+                    String creator = user.get(UserSessionManager.KEY_EMAIL);
+
+                    if (name.equals("")) {
+                        mapName.setError("Input map name");
+                        return;
+                    }
                     if (db.checkMap(name)) {
-                        Boolean insert = db.saveMap(name, city, description, owner, date, creator, tracking);
+                        Boolean insert = db.saveMap(name, city, description, owner, date, creator, tracking, finalUserID);
                         if (insert) {
                             Toast.makeText(getBaseContext(), "Save map info successfully", Toast.LENGTH_SHORT).show();
                             saveMapDialog.dismiss();
@@ -270,14 +283,16 @@ public class MapActivity extends AppCompatActivity {
                             Toast.makeText(getBaseContext(), "Failed to save map data", Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                     Toast.makeText(getBaseContext(), "Map name exists, please change to another one.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getBaseContext(), "Map name exists, please change to another one.", Toast.LENGTH_SHORT).show();
                     }
                 }
-            }
-        });
+            });
 
-        saveMapDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        saveMapDialog.show();
+            saveMapDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            saveMapDialog.show();
+        } else {
+            Toast.makeText(getBaseContext(), "Please login first", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void setupMapControlBtn() {

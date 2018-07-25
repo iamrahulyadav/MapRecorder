@@ -3,6 +3,9 @@ package com.application.ningyitong.maprecorder;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
@@ -12,14 +15,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.HashMap;
 
 public class AccountActivity extends AppCompatActivity {
-    Button btnLogout, btnSettings, btnEditProfile;
-    TextView username, mapCount;
 
     Database db;
+    Button btnLogout, btnSettings, btnEditProfile;
+    TextView username, mapCount;
+    String userEmail;
+
     // user session
     UserSessionManager session;
     @Override
@@ -38,16 +44,19 @@ public class AccountActivity extends AppCompatActivity {
 
         // get user data
         HashMap<String, String> user = session.getUserDetails();
-        String userEmail = user.get(UserSessionManager.KEY_EMAIL);
+        userEmail = user.get(UserSessionManager.KEY_EMAIL);
 
         // Show user name
         username = (TextView)findViewById(R.id.account_page_username);
         username.setText(userEmail);
 
-        // Get map number
-//        db.getMapCount();
         mapCount = (TextView)findViewById(R.id.account_page_map_count);
-        mapCount.setText("3");
+        mapCount.setText("");
+
+        // Load user map amount
+        displayMapCount();
+
+
 
         // Edit profile
         btnEditProfile = (Button)findViewById(R.id.btn_edit_profile);
@@ -58,7 +67,6 @@ public class AccountActivity extends AppCompatActivity {
                 startActivity(intent_edit);
             }
         });
-
         // Settings
         btnSettings = (Button)findViewById(R.id.btn_app_settings);
         btnSettings.setOnClickListener(new View.OnClickListener() {
@@ -79,6 +87,26 @@ public class AccountActivity extends AppCompatActivity {
                 signOutConfirmationDialog();
             }
         });
+    }
+
+    // display user map amount
+    private void displayMapCount() {
+        db = new Database(this);
+        // Get user_id first
+        Cursor data = db.getUserID(userEmail);
+        int userID = -1;
+        while (data.moveToNext()) {
+            userID = data.getInt(0);
+        }
+        if (userID > -1) {
+            // Get map number by searching use user_id
+            Cursor mapByUserId = db.searchMapByType(userID, "user_id");
+            int count = mapByUserId.getCount();
+            mapCount = (TextView)findViewById(R.id.account_page_map_count);
+            mapCount.setText(String.valueOf(count));
+        } else {
+            Toast.makeText(getBaseContext(), "Please login first", Toast.LENGTH_SHORT).show();
+        }
     }
 
     // Sign out confirmation dialog
