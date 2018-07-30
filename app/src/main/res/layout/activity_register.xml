@@ -32,7 +32,7 @@
                 tools:ignore="ContentDescription" />
 
             <EditText
-                android:id="@+id/register_email"
+                android:id="@+id/register_username"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="50dp"
@@ -41,10 +41,32 @@
                 android:drawablePadding="12dp"
                 android:drawableStart="@drawable/ic_person_white_24dp"
                 android:ems="10"
-                android:inputType="textEmailAddress"
+                android:inputType="text"
                 android:maxLines="1"
                 android:padding="8dp"
                 android:hint="@string/login_username"
+                android:textColor="#fff"
+                android:textColorHint="#fff" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#f9d7db"/>
+
+            <EditText
+                android:id="@+id/register_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="@android:color/transparent"
+                android:drawableLeft="@drawable/ic_person_white_24dp"
+                android:drawablePadding="12dp"
+                android:drawableStart="@drawable/ic_person_white_24dp"
+                android:ems="10"
+                android:inputType="textEmailAddress"
+                android:maxLines="1"
+                android:padding="8dp"
+                android:hint="Email"
                 android:textColor="#fff"
                 android:textColorHint="#fff" />
 

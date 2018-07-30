@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.support.v7.app.AppCompatActivity;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -16,8 +16,6 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import javax.net.ssl.SSLSessionContext;
-
 public class LoginActivity extends Activity implements TextWatcher, CompoundButton.OnCheckedChangeListener {
     private static final String PREFERENCE_NAME = "prefs";
     private static final String KEY_REMEMBER = "remember";
@@ -25,8 +23,8 @@ public class LoginActivity extends Activity implements TextWatcher, CompoundButt
     private static final String KEY_EMAIL = "email";
     private static final String KEY_PASSWORD = "password";
     private static final String FIRST_RUN = "firstRun";
-    private EditText etEmail, etPassword;
-    private Button btnLogin, btnRegister;
+    private EditText emailText, passwordText;
+    Button btnLogin, btnRegister;
     private Database db;
     private CheckBox rememberUser, keepSignIn;
     SharedPreferences sharedPreferences;
@@ -55,12 +53,12 @@ public class LoginActivity extends Activity implements TextWatcher, CompoundButt
 
         // get data from frontend
         db = new Database(this);
-        etEmail = (EditText)findViewById(R.id.login_email);
-        etPassword = (EditText)findViewById(R.id.login_password);
-        btnLogin = (Button)findViewById(R.id.login_loginBtn);
-        rememberUser = (CheckBox)findViewById(R.id.login_remember);
-        keepSignIn = (CheckBox)findViewById(R.id.login_keepSignIn);
-        btnRegister = (Button)findViewById(R.id.login_registerBtn);
+        emailText = findViewById(R.id.login_email);
+        passwordText = findViewById(R.id.login_password);
+        btnLogin = findViewById(R.id.login_loginBtn);
+        rememberUser = findViewById(R.id.login_remember);
+        keepSignIn = findViewById(R.id.login_keepSignIn);
+        btnRegister = findViewById(R.id.login_registerBtn);
 
         // set remember me status
         if (sharedPreferences.getBoolean(KEY_REMEMBER, false))
@@ -74,15 +72,15 @@ public class LoginActivity extends Activity implements TextWatcher, CompoundButt
             keepSignIn.setChecked(false);
 
         // save user info to sharedPreferences
-        etEmail.setText(sharedPreferences.getString(KEY_EMAIL, ""));
-        etPassword.setText(sharedPreferences.getString(KEY_PASSWORD, ""));
+        emailText.setText(sharedPreferences.getString(KEY_EMAIL, ""));
+        passwordText.setText(sharedPreferences.getString(KEY_PASSWORD, ""));
 
         // call auto sign in method
         autoSignIn();
 
         // add text change listener
-        etEmail.addTextChangedListener(this);
-        etPassword.addTextChangedListener(this);
+        emailText.addTextChangedListener(this);
+        passwordText.addTextChangedListener(this);
         rememberUser.setOnCheckedChangeListener(this);
         keepSignIn.setOnCheckedChangeListener(this);
 
@@ -108,31 +106,48 @@ public class LoginActivity extends Activity implements TextWatcher, CompoundButt
 
     // login method
     private void loginAction() {
-        String email = etEmail.getText().toString();
-        String password = etPassword.getText().toString();
+        String username = emailText.getText().toString();
+        String password = passwordText.getText().toString();
 
-        if (email.equals("")) {
-            etEmail.setError("Input username");
+        if (username.equals("")) {
+            emailText.setError("Input username");
             return;
         }
         if (password.equals("")) {
-            etPassword.setError("Input password");
+            passwordText.setError("Input password");
             return;
         }
-        // verify user email and password
-        Boolean loginValidation = db.loginValidation(email, password);
+        // verify user username or email and password
+        Boolean loginValidation_username = db.loginValidation_username(username, password);
+//        Boolean loginValidation_email = db.loginValidation_email(username, password);
 
         // validate usre login
-        if (loginValidation) {
-            session.createUserLoginSession(email);
-            Toast.makeText(getApplicationContext(), "Successfully Login", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-            finish();
-        }
-        else
-            Toast.makeText(getApplicationContext(), "Wrong email or password", Toast.LENGTH_SHORT).show();
+        if (loginValidation_username) {
+            db = new Database(this);
+            // Get user_id first
+            Cursor data = db.getUserID(username);
+            int userID = -1;
+            while (data.moveToNext()) {
+                userID = data.getInt(0);
+            }
+            if (userID > -1) {
+                // Get map number by searching use user_id
+                Cursor userInfo = db.getUserInfoById(userID);
+                userInfo.moveToFirst();
+                // Save user_id into session
+                session.createUserLoginSession(userID);
+                Toast.makeText(getApplicationContext(), "Successfully Login", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                finish();
+
+            } else {
+                Toast.makeText(getBaseContext(), "Database error!", Toast.LENGTH_SHORT).show();
+            }
+
+        } else
+            Toast.makeText(getApplicationContext(), "Wrong username or password", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -154,8 +169,8 @@ public class LoginActivity extends Activity implements TextWatcher, CompoundButt
     private void managePreferences() {
         // checkbox Remember me
         if (rememberUser.isChecked()) {
-            editor.putString(KEY_EMAIL, etEmail.getText().toString().trim());
-            editor.putString(KEY_PASSWORD, etPassword.getText().toString().trim());
+            editor.putString(KEY_EMAIL, emailText.getText().toString().trim());
+            editor.putString(KEY_PASSWORD, passwordText.getText().toString().trim());
             editor.putBoolean(KEY_REMEMBER, true);
             editor.apply();
         } else {
@@ -167,8 +182,8 @@ public class LoginActivity extends Activity implements TextWatcher, CompoundButt
 
         // checkbox Keep me sign in
         if (keepSignIn.isChecked()) {
-            editor.putString(KEY_EMAIL, etEmail.getText().toString().trim());
-            editor.putString(KEY_PASSWORD, etPassword.getText().toString().trim());
+            editor.putString(KEY_EMAIL, emailText.getText().toString().trim());
+            editor.putString(KEY_PASSWORD, passwordText.getText().toString().trim());
             editor.putBoolean(KEY_REMEMBER, true);
             editor.putBoolean(KEY_KEEP, true);
             editor.apply();

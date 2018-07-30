@@ -4,8 +4,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
@@ -15,7 +13,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.HashMap;
 
@@ -24,7 +21,8 @@ public class AccountActivity extends AppCompatActivity {
     Database db;
     Button btnLogout, btnSettings, btnEditProfile;
     TextView username, mapCount;
-    String userEmail;
+    int userID;
+    String currentUsername;
 
     // user session
     UserSessionManager session;
@@ -43,23 +41,21 @@ public class AccountActivity extends AppCompatActivity {
         setupBottomNavbar();
 
         // get user data
-        HashMap<String, String> user = session.getUserDetails();
-        userEmail = user.get(UserSessionManager.KEY_EMAIL);
-
+        HashMap<String, Integer> user = session.getUserDetails();
+        userID = user.get(UserSessionManager.KEY_USERID);
+        currentUsername = getUsername();
         // Show user name
-        username = (TextView)findViewById(R.id.account_page_username);
-        username.setText(userEmail);
+        username = findViewById(R.id.account_page_username);
+        username.setText(currentUsername);
 
-        mapCount = (TextView)findViewById(R.id.account_page_map_count);
+        mapCount = findViewById(R.id.account_page_map_count);
         mapCount.setText("");
 
         // Load user map amount
         displayMapCount();
 
-
-
         // Edit profile
-        btnEditProfile = (Button)findViewById(R.id.btn_edit_profile);
+        btnEditProfile = findViewById(R.id.btn_edit_profile);
         btnEditProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -68,7 +64,7 @@ public class AccountActivity extends AppCompatActivity {
             }
         });
         // Settings
-        btnSettings = (Button)findViewById(R.id.btn_app_settings);
+        btnSettings = findViewById(R.id.btn_app_settings);
         btnSettings.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -78,7 +74,7 @@ public class AccountActivity extends AppCompatActivity {
         });
 
         // Btn logout
-        btnLogout = (Button)findViewById(R.id.btn_logout);
+        btnLogout = findViewById(R.id.btn_logout);
         btnLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -92,21 +88,10 @@ public class AccountActivity extends AppCompatActivity {
     // display user map amount
     private void displayMapCount() {
         db = new Database(this);
-        // Get user_id first
-        Cursor data = db.getUserID(userEmail);
-        int userID = -1;
-        while (data.moveToNext()) {
-            userID = data.getInt(0);
-        }
-        if (userID > -1) {
-            // Get map number by searching use user_id
-            Cursor mapByUserId = db.searchMapByType(userID, "user_id");
-            int count = mapByUserId.getCount();
-            mapCount = (TextView)findViewById(R.id.account_page_map_count);
-            mapCount.setText(String.valueOf(count));
-        } else {
-            Toast.makeText(getBaseContext(), "Please login first", Toast.LENGTH_SHORT).show();
-        }
+        Cursor mapByUserId = db.searchMapByType(2, "user_id");
+        int count = mapByUserId.getCount();
+        mapCount = findViewById(R.id.account_page_map_count);
+        mapCount.setText(String.valueOf(count));
     }
 
     // Sign out confirmation dialog
@@ -136,7 +121,7 @@ public class AccountActivity extends AppCompatActivity {
 
     // Setup nav-bar
     private void setupBottomNavbar() {
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
+        BottomNavigationView navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         Menu menu = navigation.getMenu();
         MenuItem menuItem = menu.getItem(4);
@@ -175,4 +160,11 @@ public class AccountActivity extends AppCompatActivity {
             return false;
         }
     };
+
+    public String getUsername() {
+        db = new Database(this);
+        Cursor userInfo = db.getUserInfoById(userID);
+        userInfo.moveToFirst();
+        return userInfo.getString(userInfo.getColumnIndex("username"));
+    }
 }

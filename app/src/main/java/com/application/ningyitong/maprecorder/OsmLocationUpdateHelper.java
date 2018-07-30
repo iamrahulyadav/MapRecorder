@@ -15,7 +15,7 @@ public class OsmLocationUpdateHelper implements LocationListener {
     private MapActivity mapActivity;
 
     // Define geo data
-    List<GeoPoint> gpsDataList;
+    public List<GeoPoint> gpsDataList;
     float speed;
 
     public OsmLocationUpdateHelper(MapActivity mMapActivity) {
@@ -38,7 +38,6 @@ public class OsmLocationUpdateHelper implements LocationListener {
                     Toast.makeText(mapActivity, "Latitude = " + location.getLatitude() * 1e6 + " Longitude = " + location.getLongitude() * 1e6, Toast.LENGTH_SHORT).show();
 
                     gpsDataList.add(point);
-
 
                 }
             }

@@ -13,7 +13,7 @@ import android.widget.Toast;
 
 public class RegisterActivity extends Activity {
     Database db;
-    EditText emailText, passwordText, confirmPasswordText;
+    EditText usernameText, emailText, passwordText, confirmPasswordText;
     Button registerBtn;
     TextView hasAccountText;
     @Override
@@ -23,22 +23,24 @@ public class RegisterActivity extends Activity {
 
         setContentView(R.layout.activity_register);
 
+        // Init UI items
+        initVIew();
         db = new Database(this);
-        emailText = (EditText)findViewById(R.id.register_email);
-        passwordText = (EditText)findViewById(R.id.register_password);
-        confirmPasswordText = (EditText)findViewById(R.id.register_confirmPassword);
-        registerBtn = (Button)findViewById(R.id.register_registerBtn);
-        hasAccountText = (TextView)findViewById(R.id.register_hasAccount);
+
 
         registerBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
+                String username = usernameText.getText().toString();
                 String email = emailText.getText().toString();
                 String pass = passwordText.getText().toString();
                 String re_pass = confirmPasswordText.getText().toString();
 
+                if (username.equals("")) {
+                    usernameText.setError("Input username");
+                }
                 if (email.equals("")) {
-                    emailText.setError("Input username");
+                    emailText.setError("Input Email");
                     return;
                 }
                 if (pass.equals("")) {
@@ -51,15 +53,20 @@ public class RegisterActivity extends Activity {
                 }
 
                 if (pass.equals(re_pass)) {
+                    Boolean checkUsername = db.checkUsername(username);
                     Boolean checkEmail = db.checkEmail(email);
-                    if (checkEmail) {
-                        Boolean insert = db.saveUser(email, pass);
-                        if (insert) {
-                            Toast.makeText(getApplicationContext(), "Registered Successfully", Toast.LENGTH_SHORT).show();
-                            renderToLogin();
+                    if (checkUsername) {
+                        if (checkEmail) {
+                            Boolean insert = db.saveUser(username, email, pass);
+                            if (insert) {
+                                Toast.makeText(getApplicationContext(), "Registered Successfully", Toast.LENGTH_SHORT).show();
+                                renderToLogin();
+                            }
+                        } else {
+                            Toast.makeText(getApplicationContext(), "Email already exists, please change to anther one.", Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(getApplicationContext(), "Email Already Exists", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "Username already exists, please change to anther one.", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(getApplicationContext(), "Password do not match", Toast.LENGTH_SHORT).show();
@@ -72,6 +79,16 @@ public class RegisterActivity extends Activity {
                 renderToLogin();
             }
         });
+    }
+
+    // Init UI items
+    private void initVIew() {
+        usernameText = (EditText)findViewById(R.id.register_username);
+        emailText = (EditText)findViewById(R.id.register_email);
+        passwordText = (EditText)findViewById(R.id.register_password);
+        confirmPasswordText = (EditText)findViewById(R.id.register_confirmPassword);
+        registerBtn = (Button)findViewById(R.id.register_registerBtn);
+        hasAccountText = (TextView)findViewById(R.id.register_hasAccount);
     }
 
     // render page to login

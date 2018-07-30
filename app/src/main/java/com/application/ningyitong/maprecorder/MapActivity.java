@@ -5,25 +5,16 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -63,12 +54,15 @@ import com.hitomi.cmlibrary.CircleMenu;
 import com.hitomi.cmlibrary.OnMenuSelectedListener;
 import com.hitomi.cmlibrary.OnMenuStatusChangeListener;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MapActivity extends AppCompatActivity {
-    final private double DEFAULT_LATITUDE = 44.445883;
-    final private double DEFAULT_LONGITUDE = 26.040963;
+    final double DEFAULT_LATITUDE = 44.445883;
+    final double DEFAULT_LONGITUDE = 26.040963;
 
     Database db;
     private MapView map_view;
@@ -79,7 +73,7 @@ public class MapActivity extends AppCompatActivity {
     private Dialog saveMapDialog;
 
     // Location API
-    private LocationManager locationManager;
+    LocationManager locationManager;
     private OverlayItem lastPosition = null;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private SettingsClient settingsClient;
@@ -95,6 +89,7 @@ public class MapActivity extends AppCompatActivity {
 
     // user session
     UserSessionManager session;
+    int userID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,33 +102,37 @@ public class MapActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_map);
 
+        // Get session userID
+        HashMap<String, Integer> user = session.getUserDetails();
+        userID = user.get(UserSessionManager.KEY_USERID);
+
         //important! set your user agent to prevent getting banned from the osm servers
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-
         // Setup bottom nav-bar
         setupBottomNavbar();
-
         // Initial OSM
         setupMapView();
-
-        // Location
-//        GpsMyLocationProvider gpsMyLocationProvider = new GpsMyLocationProvider(this);
-//        gpsMyLocationProvider.setLocationUpdateMinDistance(100);
-//        gpsMyLocationProvider.setLocationUpdateMinTime(10000);
-//        gpsMyLocationProvider.addLocationSource(LocationManager.NETWORK_PROVIDER);
 
         MyLocationNewOverlay myLocationoverlay = new MyLocationNewOverlay(map_view);
         myLocationoverlay.enableFollowLocation();
         myLocationoverlay.enableMyLocation();
         map_view.getOverlays().add(myLocationoverlay);
 
-        // Set map center
-//        final GeoPoint startPoint = new GeoPoint(currentLocation);
-//        mapController.setCenter(startPoint);
-
         // Set recording button
-        recordingGpsBtn = (ImageButton) findViewById(R.id.recording_gps_btn);
+        setupRecordingBtn();
+
+        // Setup save map
+        saveMapDialog = new Dialog(this);
+        // Setup map basic control button
+        setupMapControlBtn();
+        // Setup circle menu
+        setupCircleMenu();
+    }
+
+    /** Setup recording button **/
+    private void setupRecordingBtn() {
+        recordingGpsBtn = findViewById(R.id.recording_gps_btn);
         recordingGpsBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -149,15 +148,11 @@ public class MapActivity extends AppCompatActivity {
                 }
             }
         });
+    }
 
-        // Setup save map
-        saveMapDialog = new Dialog(this);
-
-        // Setup map basic control button
-        setupMapControlBtn();
-
-        // Setup circle menu
-        circleMenu = (CircleMenu) findViewById(R.id.edit_map_circle_menu);
+    /** Setup circle menu **/
+    private void setupCircleMenu() {
+        circleMenu = findViewById(R.id.edit_map_circle_menu);
         circleMenu.setMainMenu(Color.parseColor("#ffffff"), R.drawable.ic_edit_menu_24dp, R.mipmap.icon_cancel);
         circleMenu.addSubMenu(Color.parseColor("#258CFF"), R.drawable.ic_building_white_24dp)
                 .addSubMenu(Color.parseColor("#30A400"), R.drawable.ic_traffic_white_48dp)
@@ -214,7 +209,7 @@ public class MapActivity extends AppCompatActivity {
         }
     }
 
-    // Show save map dialog
+    /** Show save map dialog **/
     public void ShowSaveMapDialog(View view) {
         ImageButton closeDialog;
         Button cancelSaveMapBtn, confirmSaveMapBtn;
@@ -222,14 +217,14 @@ public class MapActivity extends AppCompatActivity {
         saveMapDialog.setContentView(R.layout.map_save_dialog);
 
         // Dismiss save map dialog
-        closeDialog = (ImageButton) saveMapDialog.findViewById(R.id.map_save_close);
+        closeDialog = saveMapDialog.findViewById(R.id.map_save_close);
         closeDialog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 saveMapDialog.dismiss();
             }
         });
-        cancelSaveMapBtn = (Button) saveMapDialog.findViewById(R.id.map_save_cancel);
+        cancelSaveMapBtn = saveMapDialog.findViewById(R.id.map_save_cancel);
         cancelSaveMapBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -239,65 +234,69 @@ public class MapActivity extends AppCompatActivity {
 
         // Map info
         db = new Database(this);
-        mapName = (EditText) saveMapDialog.findViewById(R.id.save_map_title);
-        mapCity = (EditText) saveMapDialog.findViewById(R.id.save_map_city);
-        mapOwner = (EditText) saveMapDialog.findViewById(R.id.save_map_owner);
-        mapDescription = (EditText) saveMapDialog.findViewById(R.id.save_map_description);
-        mapDate = (EditText) saveMapDialog.findViewById(R.id.save_map_date);
+        mapName = saveMapDialog.findViewById(R.id.save_map_title);
+        mapCity = saveMapDialog.findViewById(R.id.save_map_city);
+        mapOwner = saveMapDialog.findViewById(R.id.save_map_owner);
+        mapDescription = saveMapDialog.findViewById(R.id.save_map_description);
+        mapDate = saveMapDialog.findViewById(R.id.save_map_date);
 
+        confirmSaveMapBtn = saveMapDialog.findViewById(R.id.map_save_confirm);
+        confirmSaveMapBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String name = mapName.getText().toString();
+                String city = mapCity.getText().toString();
+                String owner = mapOwner.getText().toString();
+                String description = mapDescription.getText().toString();
+                String date = mapDate.getText().toString();
+                String tracking = "gps file path";
 
-        // get user data
-        HashMap<String, String> user = session.getUserDetails();
-        String userEmail = user.get(UserSessionManager.KEY_EMAIL);
-        Cursor data = db.getUserID(userEmail);
-        int userID = -1;
-        while (data.moveToNext()) {
-            userID = data.getInt(0);
-        }
-        if (userID > -1) {
-            confirmSaveMapBtn = (Button) saveMapDialog.findViewById(R.id.map_save_confirm);
-            final int finalUserID = userID;
-            confirmSaveMapBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    String name = mapName.getText().toString();
-                    String city = mapCity.getText().toString();
-                    String owner = mapOwner.getText().toString();
-                    String description = mapDescription.getText().toString();
-                    String date = mapDate.getText().toString();
-                    String tracking = "gps file path";
-                    // get user data
-                    HashMap<String, String> user = session.getUserDetails();
-                    String creator = user.get(UserSessionManager.KEY_EMAIL);
+                // Save geo points
+                FileOutputStream fileOutputStream = null;
+                try {
+                    fileOutputStream = openFileOutput(name, MODE_PRIVATE);
+                    fileOutputStream.write("dddd".getBytes());
 
-                    if (name.equals("")) {
-                        mapName.setError("Input map name");
-                        return;
-                    }
-                    if (db.checkMap(name)) {
-                        Boolean insert = db.saveMap(name, city, description, owner, date, creator, tracking, finalUserID);
-                        if (insert) {
-                            Toast.makeText(getBaseContext(), "Save map info successfully", Toast.LENGTH_SHORT).show();
-                            saveMapDialog.dismiss();
-                        } else {
-                            Toast.makeText(getBaseContext(), "Failed to save map data", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getBaseContext(), "Save path: " + getFilesDir() + "/" + name, Toast.LENGTH_LONG).show();
+                    tracking = getFilesDir() + "/" + name;
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (fileOutputStream != null) {
+                        try {
+                            fileOutputStream.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                    } else {
-                        Toast.makeText(getBaseContext(), "Map name exists, please change to another one.", Toast.LENGTH_SHORT).show();
                     }
                 }
-            });
 
-            saveMapDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            saveMapDialog.show();
-        } else {
-            Toast.makeText(getBaseContext(), "Please login first", Toast.LENGTH_SHORT).show();
-        }
+                if (name.equals("")) {
+                    mapName.setError("Input map name");
+                    return;
+                }
+                if (db.checkMap(name)) {
+                    Boolean insert = db.saveMap(name, city, description, owner, date, tracking, userID);
+                    if (insert) {
+                        Toast.makeText(getBaseContext(), "Save map info successfully", Toast.LENGTH_SHORT).show();
+                        saveMapDialog.dismiss();
+                    } else {
+                        Toast.makeText(getBaseContext(), "Failed to save map data", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(getBaseContext(), "Map name exists, please change to another one.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        saveMapDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        saveMapDialog.show();
     }
 
     private void setupMapControlBtn() {
         // Zoom button
-        ImageButton btnZoomIn = (ImageButton) findViewById(R.id.zoom_in);
+        ImageButton btnZoomIn = findViewById(R.id.zoom_in);
         btnZoomIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -305,7 +304,7 @@ public class MapActivity extends AppCompatActivity {
             }
         });
 
-        ImageButton btnZoomOut = (ImageButton) findViewById(R.id.zoom_out);
+        ImageButton btnZoomOut = findViewById(R.id.zoom_out);
         btnZoomOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -313,30 +312,34 @@ public class MapActivity extends AppCompatActivity {
             }
         });
 
-        ImageButton btnLocation = (ImageButton) findViewById(R.id.location_track);
-        btnLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (currentLocation != null) {
-                    mapController.setCenter(new GeoPoint(currentLocation));
-                } else {
-                    Toast.makeText(getBaseContext(), "Cannot access your current location", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
+//        ImageButton btnLocation = (ImageButton) findViewById(R.id.location_track);
+//        btnLocation.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if (currentLocation != null) {
+//                    mapController.setCenter(new GeoPoint(currentLocation));
+//                } else {
+//                    Toast.makeText(getBaseContext(), "Cannot access your current location", Toast.LENGTH_LONG).show();
+//                }
+//            }
+//        });
     }
 
     private void setupBottomNavbar() {
         // Bottom nav-bar
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
+        BottomNavigationView navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         Menu menu = navigation.getMenu();
         MenuItem menuItem = menu.getItem(1);
         menuItem.setChecked(true);
     }
 
+    /** Init map view **/
     private void setupMapView() {
-        map_view = (MapView) findViewById(R.id.mapview);
+
+        ImageButton btnLocation = findViewById(R.id.location_track);
+
+        map_view = findViewById(R.id.mapview);
         map_view.setTileSource(TileSourceFactory.MAPNIK);
         // Enable map clickable
         map_view.setClickable(true);
@@ -382,11 +385,22 @@ public class MapActivity extends AppCompatActivity {
             location.setLongitude(DEFAULT_LONGITUDE);
             updateCurrentLocation(new GeoPoint(location));
         }
+
+        final Location finalLocation = location;
+        btnLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (currentLocation != null) {
+                    mapController.setCenter(new GeoPoint(finalLocation));
+                } else {
+                    Toast.makeText(getBaseContext(), "Cannot access your current location", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
     }
 
     public void updateCurrentLocation(GeoPoint geoPoint) {
-        Toast.makeText(getBaseContext(), "Latitude = " + geoPoint.getLatitude() * 1e6 + " Longitude = " + geoPoint.getLongitude() * 1e6, Toast.LENGTH_SHORT).show();
-
+        Toast.makeText(getBaseContext(), "Latituddddddddddddddde = " + geoPoint.getLatitude() * 1e6 + " Longitude = " + geoPoint.getLongitude() * 1e6, Toast.LENGTH_SHORT).show();
     }
 
     // Bottom navigation bar function

@@ -26,8 +26,9 @@ public class UserSessionManager {
     private static final String IS_USER_LOGIN = "IsUserLoggedIn";
 
     // user email
-    public static final String KEY_EMAIL = "email";
-    public static final String KEY_NAME = "email";
+//    public static final String KEY_EMAIL = "email";
+//    public static final String KEY_NAME = "username";
+    public static final String KEY_USERID = "user_id";
 
     // constructor
     public UserSessionManager(Context context) {
@@ -37,12 +38,11 @@ public class UserSessionManager {
     }
 
     // create login session
-    public void createUserLoginSession(String email) {
+    public void createUserLoginSession(int userID) {
         // save login value as true
         editor.putBoolean(IS_USER_LOGIN, true);
-        // save email in preference
-        editor.putString(KEY_EMAIL, email);
-        editor.putString(KEY_NAME, email);
+        // save username in preference
+        editor.putInt(KEY_USERID, userID);
         // commit changes
         editor.commit();
     }
@@ -61,10 +61,9 @@ public class UserSessionManager {
     }
 
     // save session data
-    public HashMap<String, String> getUserDetails() {
-        HashMap<String, String> user = new HashMap<>();
-        user.put(KEY_EMAIL, preferences.getString(KEY_EMAIL, null));
-        user.put(KEY_NAME, preferences.getString(KEY_NAME, null));
+    public HashMap<String, Integer> getUserDetails() {
+        HashMap<String, Integer> user = new HashMap<>();
+        user.put(KEY_USERID, preferences.getInt(KEY_USERID, -1));
         return user;
     }
 

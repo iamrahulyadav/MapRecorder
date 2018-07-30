@@ -42,8 +42,11 @@ dependencies {
     implementation 'org.osmdroid:osmdroid-android:6.0.1'
 
     // Google Maps API
-    implementation 'com.google.android.gms:play-services-maps:9.0.2'
+    implementation 'com.google.android.gms:play-services-maps:15.0.1'
     implementation 'com.google.android.gms:play-services-location:15.0.1'
+    // Google Drive API
+    implementation 'com.google.android.gms:play-services-drive:15.0.1'
+    implementation 'com.google.android.gms:play-services-auth:15.0.1'
 
     // Action circle menu
     implementation 'com.github.Hitomis:CircleMenu:v1.0.0'

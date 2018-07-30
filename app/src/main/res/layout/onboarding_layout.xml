@@ -23,7 +23,7 @@
         android:layout_centerHorizontal="true"
         android:layout_centerInParent="false"
         android:layout_centerVertical="false"
-        android:layout_marginTop="520dp"
+        android:layout_marginTop="480dp"
         android:text="HEADING"
         android:textAlignment="center"
         android:textColor="@android:color/background_dark"
@@ -32,7 +32,7 @@
 
     <TextView
         android:id="@+id/onboarding_content"
-        android:layout_width="339dp"
+        android:layout_width="340dp"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="false"
         android:layout_below="@+id/onboarding_heading"

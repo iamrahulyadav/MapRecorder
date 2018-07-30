@@ -12,13 +12,10 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.model.TileOverlay;
-
 public class EditMapItemActivity extends AppCompatActivity {
 
     Database db;
-
-    private Button btnDelete, btnSave;
+    Button btnDelete, btnSave;
     ImageButton btnBack;
     EditText mapName, mapCity, mapOwner, mapDescription, mapDate;
 
@@ -34,13 +31,13 @@ public class EditMapItemActivity extends AppCompatActivity {
         createBackBtn();
 
         // Find view
-        btnDelete = (Button)findViewById(R.id.map_item_delete_btn);
-        btnSave = (Button)findViewById(R.id.map_item_save_btn);
-        mapName = (EditText)findViewById(R.id.map_item_title);
-        mapCity = (EditText)findViewById(R.id.map_item_city);
-        mapOwner = (EditText)findViewById(R.id.map_item_owner);
-        mapDescription = (EditText)findViewById(R.id.map_item_description);
-        mapDate = (EditText)findViewById(R.id.map_item_date);
+        btnDelete = findViewById(R.id.map_item_delete_btn);
+        btnSave = findViewById(R.id.map_item_save_btn);
+        mapName = findViewById(R.id.map_item_title);
+        mapCity = findViewById(R.id.map_item_city);
+        mapOwner = findViewById(R.id.map_item_owner);
+        mapDescription = findViewById(R.id.map_item_description);
+        mapDate = findViewById(R.id.map_item_date);
         db = new Database(this);
 
         // Get data from EditActivity
@@ -83,18 +80,19 @@ public class EditMapItemActivity extends AppCompatActivity {
                 String newDate = mapDate.getText().toString();
                 String newDescription = mapDescription.getText().toString();
 
-                if (!newName.equals("")) {
-                    if (db.checkMap(newName)) {
-                        db.updateMapInfo(newName, newCity, newOwner, newDate, newDescription, selectedMapID);
-                        Toast.makeText(getBaseContext(), "Changes have been saved.", Toast.LENGTH_SHORT).show();
-                        Intent intent_edit = new Intent(EditMapItemActivity.this, EditActivity.class);
-                        startActivity(intent_edit);
-                    } else {
-                        Toast.makeText(getBaseContext(), "Map name exists, please change to another one.", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(getBaseContext(), "Map title cannot empty!", Toast.LENGTH_SHORT).show();
+                if (newName.equals("")) {
+                    mapName.setError("Input map name");
+                    return;
                 }
+
+                // If map name exists, stop changing
+                if (newName.equals(selectedMapName) || db.checkMap(newName)) {
+                    db.updateMapInfo(newName, newCity, newOwner, newDate, newDescription, selectedMapID);
+                    Toast.makeText(getBaseContext(), "Changes have been saved.", Toast.LENGTH_SHORT).show();
+                    Intent intent_edit = new Intent(EditMapItemActivity.this, EditActivity.class);
+                    startActivity(intent_edit);
+                } else
+                    Toast.makeText(getBaseContext(), "Map name exists, please change to another one.", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -133,6 +131,7 @@ public class EditMapItemActivity extends AppCompatActivity {
         alertDialog.create().show();
     }
 
+    // Show map current information
     private void showMapDetails(int selectedMapID, String selectedMapName) {
         db = new Database(this);
         Cursor mapItem = db.getMapInfoById(selectedMapID);
@@ -151,7 +150,7 @@ public class EditMapItemActivity extends AppCompatActivity {
     }
 
     private void createBackBtn() {
-        btnBack = (ImageButton)findViewById(R.id.map_item_back_btn);
+        btnBack = findViewById(R.id.map_item_back_btn);
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
