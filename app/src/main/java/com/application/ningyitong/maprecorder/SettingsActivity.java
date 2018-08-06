@@ -13,7 +13,7 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        btnBack = (ImageButton)findViewById(R.id.settings_page_back_btn);
+        btnBack = findViewById(R.id.settings_page_back_btn);
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

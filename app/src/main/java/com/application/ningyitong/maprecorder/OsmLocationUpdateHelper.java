@@ -18,8 +18,8 @@ public class OsmLocationUpdateHelper implements LocationListener {
     public List<GeoPoint> gpsDataList;
     float speed;
 
-    public OsmLocationUpdateHelper(MapActivity mMapActivity) {
-        this.mapActivity = mMapActivity;
+    public OsmLocationUpdateHelper(MapActivity mapActivity) {
+        this.mapActivity = mapActivity;
     }
 
     @Override

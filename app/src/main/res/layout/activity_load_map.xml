@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/map"
+    android:name="com.google.android.gms.maps.SupportMapFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MapActivity">
+
+    <org.osmdroid.views.MapView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/load_map_map_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:clickable="true"
+        android:enabled="true"
+        android:focusable="true"
+        map:layout_constraintBottom_toTopOf="@+id/navigation" />
+
+    <TextView
+        android:id="@+id/load_map_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:text="Map Title"
+        android:textColor="#000"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <com.hitomi.cmlibrary.CircleMenu
+        android:id="@+id/load_map_circle_menu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="30dp"
+        android:clipToPadding="false"
+        android:divider="@drawable/horizontal_bar_divider"
+        android:orientation="horizontal"
+        android:padding="4dp"
+        android:showDividers="middle"
+        tools:ignore="RtlHardcoded"
+        tools:layout_editor_absoluteX="300dp"
+        tools:layout_editor_absoluteY="310dp"
+        android:layout_alignParentRight="true">
+
+        <ImageButton
+            android:id="@+id/load_map_save_map"
+            style="@style/RoundMapButton"
+            android:onClick="ShowSaveMapDialog"
+            android:background="@android:color/background_light"
+            android:contentDescription="@string/map_control_edit"
+            map:srcCompat="@drawable/ic_save_24dp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignTop="@+id/load_map_circle_menu"
+        android:clipToPadding="false"
+        android:divider="@drawable/vertical_bar_divider"
+        android:orientation="vertical"
+        android:padding="4dp"
+        android:showDividers="middle"
+        tools:ignore="RtlHardcoded"
+        tools:layout_editor_absoluteX="300dp"
+        tools:layout_editor_absoluteY="310dp"
+        android:layout_alignParentRight="true">
+
+        <ImageButton
+            android:id="@+id/load_map_zoom_in"
+            style="@style/RoundMapButton"
+            android:background="@android:color/background_light"
+            android:contentDescription="@string/map_control_zoom_in"
+            map:srcCompat="@drawable/ic_add_circle_outline_black_24dp" />
+
+        <ImageButton
+            android:id="@+id/load_map_zoom_out"
+            style="@style/RoundMapButton"
+            android:background="@android:color/background_light"
+            android:contentDescription="@string/map_control_zoom_out"
+            map:srcCompat="@drawable/ic_remove_circle_outline_black_24dp" />
+
+
+    </LinearLayout>
+
+</RelativeLayout>

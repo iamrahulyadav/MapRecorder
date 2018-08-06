@@ -6,13 +6,10 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -20,12 +17,10 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public class EditActivity extends AppCompatActivity {
     Database db;
@@ -52,10 +47,48 @@ public class EditActivity extends AppCompatActivity {
         setupBottomNavbar();
 
         // Create search bar
-        searchText = (EditText)findViewById(R.id.edit_page_search_text);
+        searchText = findViewById(R.id.edit_page_search_text);
         // Create search type spinner;
         createSearchTypeSpinner();
         // Create search button
+        createSearchBtn();
+
+        // Create list view
+        listView = findViewById(R.id.mapDataList);
+        mapList = new ArrayList<>();
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                // Get item string and remove the first character '{'
+                String item = listView.getItemAtPosition(i).toString().substring(1);
+                // Divide string into 4 parts by ','
+                String[] mapInfo = item.split(",", 3);
+                // Get the map name
+                String name = mapInfo[0].replace("name=", "");
+
+                Cursor data = db.getMapID(name);
+                int mapID = -1;
+                while (data.moveToNext()) {
+                    mapID = data.getInt(0);
+                }
+                if (mapID > -1) {
+                    Intent editMapItemActivity = new Intent(EditActivity.this, EditMapItemActivity.class);
+                    editMapItemActivity.putExtra("id", mapID);
+                    editMapItemActivity.putExtra("name", name);
+                    startActivity(editMapItemActivity);
+                } else {
+                    Toast.makeText(getBaseContext(), "Cannot find the map", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        // Load local map list
+        loadMapList();
+    }
+
+    /** Create search button on nav-bar **/
+    private void createSearchBtn() {
         searchBtn = (ImageButton)findViewById(R.id.edit_page_search_btn);
         searchBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,47 +104,11 @@ public class EditActivity extends AppCompatActivity {
                 }
             }
         });
-
-        // Create list view
-        listView = (ListView)findViewById(R.id.mapDataList);
-        mapList = new ArrayList<>();
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                // Get item string and remove the first character '{'
-                String item = listView.getItemAtPosition(i).toString().substring(1);
-//                Toast.makeText(getBaseContext(), item, Toast.LENGTH_SHORT).show();
-                // Divide string into 4 parts by ','
-                String[] mapInfo = item.split(",", 3);
-                // Get the map name
-                String name = mapInfo[0].replace("name=", "");
-//                Toast.makeText(getBaseContext(), name, Toast.LENGTH_SHORT).show();
-
-                Cursor data = db.getMapID(name);
-                int mapID = -1;
-                while (data.moveToNext()) {
-                    mapID = data.getInt(0);
-                }
-                if (mapID > -1) {
-//                    Toast.makeText(getBaseContext(), "Map ID is: " + mapID, Toast.LENGTH_SHORT).show();
-                    Intent editMapItemActivity = new Intent(EditActivity.this, EditMapItemActivity.class);
-                    editMapItemActivity.putExtra("id", mapID);
-                    editMapItemActivity.putExtra("name", name);
-                    startActivity(editMapItemActivity);
-                } else {
-                    Toast.makeText(getBaseContext(), "Cannot find the map", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        // Load local map list
-        loadMapList();
     }
 
     // Create search type spinner
     private void createSearchTypeSpinner() {
-        searchType = (Spinner)findViewById(R.id.edit_page_search_dropdown);
+        searchType = findViewById(R.id.edit_page_search_dropdown);
     }
 
     private void loadMapList() {
@@ -178,7 +175,7 @@ public class EditActivity extends AppCompatActivity {
 
     private void setupBottomNavbar() {
         // Bottom nav-bar
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
+        BottomNavigationView navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         Menu menu = navigation.getMenu();
         MenuItem menuItem = menu.getItem(2);

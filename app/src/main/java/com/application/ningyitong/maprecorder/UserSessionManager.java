@@ -8,16 +8,16 @@ import java.util.HashMap;
 
 public class UserSessionManager {
     // shared preferences
-    SharedPreferences preferences;
+    private SharedPreferences preferences;
 
     // editor reference
-    SharedPreferences.Editor editor;
+    private SharedPreferences.Editor editor;
 
     // context
-    Context _context;
+    private Context _context;
 
     // shared preference mode
-    int PRVATE_MODE = 0;
+    static private int PRVATE_MODE = 0;
 
     // shared preference file name
     private static final String PREFERENCE_NAME = "MapRecorderPreference";
@@ -31,7 +31,7 @@ public class UserSessionManager {
     public static final String KEY_USERID = "user_id";
 
     // constructor
-    public UserSessionManager(Context context) {
+    UserSessionManager(Context context) {
         this._context = context;
         preferences = _context.getSharedPreferences(PREFERENCE_NAME, PRVATE_MODE);
         editor = preferences.edit();

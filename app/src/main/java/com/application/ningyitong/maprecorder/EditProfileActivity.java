@@ -1,20 +1,17 @@
 package com.application.ningyitong.maprecorder;
 
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.media.Image;
-import android.support.v7.app.AlertDialog;
+
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.TabHost;
-import android.widget.TextView;
+
 import android.widget.Toast;
 
 import java.util.HashMap;
@@ -22,7 +19,7 @@ import java.util.HashMap;
 public class EditProfileActivity extends AppCompatActivity {
 
     ImageButton btnBack, editUsernameBtn, editEmailBtn;
-    EditText editUsernameText, editEmailText;
+    EditText editUsernameText, editEmailText = (EditText)findViewById(R.id.edit_profile_email_text);
     Database db;
     private Dialog changePasswordDialog;
 
@@ -42,7 +39,7 @@ public class EditProfileActivity extends AppCompatActivity {
         HashMap<String, Integer> user = session.getUserDetails();
         userID = user.get(UserSessionManager.KEY_USERID);
 
-        btnBack = (ImageButton)findViewById(R.id.edit_profile_page_back_btn);
+        btnBack = findViewById(R.id.edit_profile_page_back_btn);
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -73,12 +70,12 @@ public class EditProfileActivity extends AppCompatActivity {
         // Init change password dialog
         changePasswordDialog.setContentView(R.layout.change_password_dialog);
 
-        closeDialogBtn = (ImageButton)changePasswordDialog.findViewById(R.id.change_password_close_btn);
-        currentPasswordText = (EditText)changePasswordDialog.findViewById(R.id.change_password_old_pass_text);
-        newPasswordText = (EditText)changePasswordDialog.findViewById(R.id.change_password_new_pass_text);
-        rePasswordText = (EditText)changePasswordDialog.findViewById(R.id.change_password_re_pass_text);
-        cancelChangePassBtn = (Button)changePasswordDialog.findViewById(R.id.change_password_cancel_btn);
-        confirmChangePassBtn = (Button)changePasswordDialog.findViewById(R.id.change_password_confirm_btn);
+        closeDialogBtn = changePasswordDialog.findViewById(R.id.change_password_close_btn);
+        currentPasswordText = changePasswordDialog.findViewById(R.id.change_password_old_pass_text);
+        newPasswordText = changePasswordDialog.findViewById(R.id.change_password_new_pass_text);
+        rePasswordText = changePasswordDialog.findViewById(R.id.change_password_re_pass_text);
+        cancelChangePassBtn = changePasswordDialog.findViewById(R.id.change_password_cancel_btn);
+        confirmChangePassBtn = changePasswordDialog.findViewById(R.id.change_password_confirm_btn);
 
         // Set close dialog button
         closeDialogBtn.setOnClickListener(new View.OnClickListener() {
@@ -132,18 +129,18 @@ public class EditProfileActivity extends AppCompatActivity {
         changePasswordDialog.show();
     }
 
-    public void initChangePasswordDialog() {
-        ImageButton closeDialogBtn;
-        final EditText currentPasswordText, newPasswordText, rePasswordText;
-        Button cancelChangePassBtn, confirmChangePassBtn;
-
-        closeDialogBtn = (ImageButton)findViewById(R.id.change_password_close_btn);
-        currentPasswordText = (EditText)findViewById(R.id.change_password_old_pass_text);
-        newPasswordText = (EditText)findViewById(R.id.change_password_new_pass_text);
-        rePasswordText = (EditText)findViewById(R.id.change_password_re_pass_text);
-        cancelChangePassBtn = (Button)findViewById(R.id.change_password_cancel_btn);
-        confirmChangePassBtn = (Button)findViewById(R.id.change_password_confirm_btn);
-    }
+//    public void initChangePasswordDialog() {
+//        ImageButton closeDialogBtn;
+//        final EditText currentPasswordText, newPasswordText, rePasswordText;
+//        Button cancelChangePassBtn, confirmChangePassBtn;
+//
+//        closeDialogBtn = (ImageButton)findViewById(R.id.change_password_close_btn);
+//        currentPasswordText = (EditText)findViewById(R.id.change_password_old_pass_text);
+//        newPasswordText = (EditText)findViewById(R.id.change_password_new_pass_text);
+//        rePasswordText = (EditText)findViewById(R.id.change_password_re_pass_text);
+//        cancelChangePassBtn = (Button)findViewById(R.id.change_password_cancel_btn);
+//        confirmChangePassBtn = (Button)findViewById(R.id.change_password_confirm_btn);
+//    }
 
     // Change user Email
     private void changeEmail() {
@@ -201,9 +198,8 @@ public class EditProfileActivity extends AppCompatActivity {
 
     // Init buttons, text fields
     private void initView() {
-        editUsernameBtn = (ImageButton)findViewById(R.id.edit_profile_change_username_btn);
-        editEmailBtn = (ImageButton)findViewById(R.id.edit_profile_change_email_btn);
-        editUsernameText = (EditText)findViewById(R.id.edit_profile_username_text);
-        editEmailText = (EditText)findViewById(R.id.edit_profile_email_text);
+        editUsernameBtn = findViewById(R.id.edit_profile_change_username_btn);
+        editEmailBtn = findViewById(R.id.edit_profile_change_email_btn);
+        editUsernameText = findViewById(R.id.edit_profile_username_text);
     }
 }

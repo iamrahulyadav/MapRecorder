@@ -13,7 +13,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 public class OnboardingHelper extends PagerAdapter{
-    Context context;
+    private Context context;
     LayoutInflater layoutInflater;
 
     public OnboardingHelper(Context context) {
@@ -52,9 +52,9 @@ public class OnboardingHelper extends PagerAdapter{
         layoutInflater = (LayoutInflater) context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
         View view = layoutInflater.inflate(R.layout.onboarding_layout, container, false);
 
-        ImageView onboardingBackground = (ImageView)view.findViewById(R.id.onboarding_background);
-        TextView onboardingHeading = (TextView)view.findViewById(R.id.onboarding_heading);
-        TextView onboardingContent = (TextView)view.findViewById(R.id.onboarding_content);
+        ImageView onboardingBackground = view.findViewById(R.id.onboarding_background);
+        TextView onboardingHeading = view.findViewById(R.id.onboarding_heading);
+        TextView onboardingContent = view.findViewById(R.id.onboarding_content);
 
         onboardingBackground.setImageResource(onboarding_images[position]);
         onboardingHeading.setText(onboarding_heading[position]);

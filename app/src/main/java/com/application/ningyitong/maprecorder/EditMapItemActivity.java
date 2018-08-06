@@ -16,11 +16,12 @@ public class EditMapItemActivity extends AppCompatActivity {
 
     Database db;
     Button btnDelete, btnSave;
-    ImageButton btnBack;
+    ImageButton btnBack, btnLoadMap;
     EditText mapName, mapCity, mapOwner, mapDescription, mapDate;
 
     private int selectedMapID;
     private String selectedMapName;
+    private String selectedMapUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,22 +32,29 @@ public class EditMapItemActivity extends AppCompatActivity {
         createBackBtn();
 
         // Find view
-        btnDelete = findViewById(R.id.map_item_delete_btn);
-        btnSave = findViewById(R.id.map_item_save_btn);
-        mapName = findViewById(R.id.map_item_title);
-        mapCity = findViewById(R.id.map_item_city);
-        mapOwner = findViewById(R.id.map_item_owner);
-        mapDescription = findViewById(R.id.map_item_description);
-        mapDate = findViewById(R.id.map_item_date);
-        db = new Database(this);
+        initView();
 
         // Get data from EditActivity
         Intent receivedIntent = getIntent();
         selectedMapID = receivedIntent.getIntExtra("id", -1);
         selectedMapName = receivedIntent.getStringExtra("name");
+//        selectedMapUrl = receivedIntent.getStringExtra("tracking");
+        selectedMapUrl = "paristour";
 
         mapName.setText(selectedMapName);
         showMapDetails(selectedMapID, selectedMapName);
+
+        // Load map btn
+        btnLoadMap.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent loadMapActivity = new Intent(EditMapItemActivity.this, LoadMapActivity.class);
+                loadMapActivity.putExtra("id", selectedMapID);
+                loadMapActivity.putExtra("name", selectedMapName);
+                loadMapActivity.putExtra("url", selectedMapUrl);
+                startActivity(loadMapActivity);
+            }
+        });
 
         // Save btn
         btnSave.setOnClickListener(new View.OnClickListener() {
@@ -64,6 +72,19 @@ public class EditMapItemActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    /** Init view **/
+    private void initView() {
+        btnLoadMap = findViewById(R.id.map_item_load_btn);
+        btnDelete = findViewById(R.id.map_item_delete_btn);
+        btnSave = findViewById(R.id.map_item_save_btn);
+        mapName = findViewById(R.id.map_item_title);
+        mapCity = findViewById(R.id.map_item_city);
+        mapOwner = findViewById(R.id.map_item_owner);
+        mapDescription = findViewById(R.id.map_item_description);
+        mapDate = findViewById(R.id.map_item_date);
+        db = new Database(this);
     }
 
     private void saveChangesConfirmationDialog() {
@@ -106,6 +127,7 @@ public class EditMapItemActivity extends AppCompatActivity {
         alertDialog.create().show();
     }
 
+    /** Confirmation dialog for deleting map **/
     private void deleteConfirmationDialog() {
         final AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
         alertDialog.setMessage("Are you sure to delete this map?");
@@ -131,7 +153,7 @@ public class EditMapItemActivity extends AppCompatActivity {
         alertDialog.create().show();
     }
 
-    // Show map current information
+    /** Show map current information **/
     private void showMapDetails(int selectedMapID, String selectedMapName) {
         db = new Database(this);
         Cursor mapItem = db.getMapInfoById(selectedMapID);
@@ -149,6 +171,7 @@ public class EditMapItemActivity extends AppCompatActivity {
         }
     }
 
+    /** Create Back btn on nav-bar **/
     private void createBackBtn() {
         btnBack = findViewById(R.id.map_item_back_btn);
         btnBack.setOnClickListener(new View.OnClickListener() {

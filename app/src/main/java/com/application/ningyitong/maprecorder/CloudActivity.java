@@ -9,13 +9,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Bitmap;
-import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+
 import android.util.Log;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -43,7 +40,7 @@ public class CloudActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_CAPTURE_IMAGE = 1;
     private static final int REQUEST_CODE_CREATOR = 2;
 
-    private GoogleSignInClient mGoogleSignInClient;
+    GoogleSignInClient mGoogleSignInClient;
     private DriveClient mDriveClient;
     private DriveResourceClient mDriveResourceClient;
     private Bitmap mBitmapToSave;

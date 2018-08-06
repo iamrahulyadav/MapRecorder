@@ -2,7 +2,6 @@ package com.application.ningyitong.maprecorder;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -83,12 +82,12 @@ public class RegisterActivity extends Activity {
 
     // Init UI items
     private void initVIew() {
-        usernameText = (EditText)findViewById(R.id.register_username);
-        emailText = (EditText)findViewById(R.id.register_email);
-        passwordText = (EditText)findViewById(R.id.register_password);
-        confirmPasswordText = (EditText)findViewById(R.id.register_confirmPassword);
-        registerBtn = (Button)findViewById(R.id.register_registerBtn);
-        hasAccountText = (TextView)findViewById(R.id.register_hasAccount);
+        usernameText = findViewById(R.id.register_username);
+        emailText = findViewById(R.id.register_email);
+        passwordText = findViewById(R.id.register_password);
+        confirmPasswordText = findViewById(R.id.register_confirmPassword);
+        registerBtn = findViewById(R.id.register_registerBtn);
+        hasAccountText = findViewById(R.id.register_hasAccount);
     }
 
     // render page to login

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.preference.PreferenceManager;
@@ -15,11 +16,14 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.BoringLayout;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.DelayedMapListener;
+import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.events.MapListener;
 import org.osmdroid.events.ScrollEvent;
 import org.osmdroid.events.ZoomEvent;
@@ -29,11 +33,16 @@ import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
+import org.osmdroid.views.overlay.MapEventsOverlay;
+import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.OverlayItem;
+import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
+import org.osmdroid.views.overlay.TilesOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
+import org.osmdroid.views.overlay.infowindow.BasicInfoWindow;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
@@ -57,6 +66,8 @@ import com.hitomi.cmlibrary.OnMenuStatusChangeListener;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -72,6 +83,8 @@ public class MapActivity extends AppCompatActivity {
     public Boolean isRecording = false;
     private Dialog saveMapDialog;
 
+    public Boolean isDrawingOverlay = false;
+
     // Location API
     LocationManager locationManager;
     private OverlayItem lastPosition = null;
@@ -80,12 +93,24 @@ public class MapActivity extends AppCompatActivity {
     private LocationRequest locationRequest;
     private LocationSettingsRequest locationSettingsRequest;
     private LocationCallback locationCallback;
-    private Location currentLocation;
+    private GeoPoint currentLocation;
     OsmLocationUpdateHelper locationUpdateHelper;
     private ArrayList<OverlayItem> locationItems = new ArrayList<OverlayItem>();
+    MapEventsReceiver mapEventsReceiver;
 
     // Location update interval
     private static final long UPDATE_INTERVAL = 10000;
+
+    // Define final object name
+    private final String OBJECT_BUILDING = "Building";
+    private final String OBJECT_HOSPITAL = "Hospital";
+    private final String OBJECT_ATM = "ATM";
+    private final String OBJECT_TRAFFIC_LIGHT = "Traffic Light";
+    private final String OBJECT_LINE = "Line";
+    private final String OBJECT_UNDO = "Undo";
+
+    ArrayList<OverlayItem> mItems;
+    String object = "";
 
     // user session
     UserSessionManager session;
@@ -106,6 +131,8 @@ public class MapActivity extends AppCompatActivity {
         HashMap<String, Integer> user = session.getUserDetails();
         userID = user.get(UserSessionManager.KEY_USERID);
 
+        mItems = new ArrayList<OverlayItem>();
+
         //important! set your user agent to prevent getting banned from the osm servers
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
@@ -118,6 +145,7 @@ public class MapActivity extends AppCompatActivity {
         myLocationoverlay.enableFollowLocation();
         myLocationoverlay.enableMyLocation();
         map_view.getOverlays().add(myLocationoverlay);
+        currentLocation = myLocationoverlay.getMyLocation();
 
         // Set recording button
         setupRecordingBtn();
@@ -128,6 +156,68 @@ public class MapActivity extends AppCompatActivity {
         setupMapControlBtn();
         // Setup circle menu
         setupCircleMenu();
+
+        mapEventsReceiver = new MapEventsReceiver() {
+            @Override
+            public boolean singleTapConfirmedHelper(GeoPoint p) {
+//                Toast.makeText(getBaseContext(), "Put " + object + " " + p.getLatitude() + "-" + p.getLongitude(), Toast.LENGTH_LONG).show();
+
+//                    Polygon circle = new Polygon(map_view);
+//                    circle.setPoints(Polygon.pointsAsCircle(p, 2000.0));
+//
+//                    circle.setFillColor(0x12121212);
+//                    circle.setStrokeColor(Color.RED);
+//                    circle.setStrokeWidth(2);
+                if (!object.equals("") || !object.equals(null))
+                    drawMarker(p, object);
+
+                return false;
+            }
+            @Override
+            public boolean longPressHelper(GeoPoint p) {
+                return false;
+            }
+        };
+        MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(getBaseContext(), mapEventsReceiver);
+        map_view.getOverlays().add(mapEventsOverlay);
+    }
+
+    /** Draw Marker **/
+    private void drawMarker(GeoPoint p, String object) {
+        if (object.equals(""))
+            return;
+
+//        if (object.equals(OBJECT_UNDO)) {
+//            Toast.makeText(getBaseContext(), "Undo add Marker", Toast.LENGTH_LONG).show();
+//            map_view.getOverlayManager().remove(marker);
+//        }
+        Marker marker = new Marker(map_view);
+        marker.setPosition(p);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        map_view.getOverlays().add(marker);
+        switch (object) {
+            case OBJECT_BUILDING:
+                marker.setIcon(getResources().getDrawable(R.drawable.ic_location_city_black_24dp));
+                break;
+            case OBJECT_ATM:
+                marker.setIcon(getResources().getDrawable(R.drawable.ic_local_atm_black_24dp));
+                break;
+            case OBJECT_HOSPITAL:
+                marker.setIcon(getResources().getDrawable(R.drawable.ic_local_hospital_black_24dp));
+                break;
+            case OBJECT_LINE:
+                marker.setIcon(getResources().getDrawable(R.drawable.ic_local_atm_black_24dp));
+                break;
+            case OBJECT_TRAFFIC_LIGHT:
+                marker.setIcon(getResources().getDrawable(R.drawable.ic_traffic_black_24dp));
+                break;
+            default:
+                break;
+        }
+        marker.setTitle(object);
+        map_view.getOverlays().add(marker);
+
+        map_view.invalidate();
     }
 
     /** Setup recording button **/
@@ -166,22 +256,28 @@ public class MapActivity extends AppCompatActivity {
             public void onMenuSelected(int i) {
                 switch (i) {
                     case 0:
-                        Toast.makeText(getBaseContext(), "Add building", Toast.LENGTH_SHORT).show();
+                        isDrawingOverlay = true;
+                        object = OBJECT_BUILDING;
                         break;
                     case 1:
-                        Toast.makeText(getBaseContext(), "Add traffic light", Toast.LENGTH_SHORT).show();
+                        isDrawingOverlay = true;
+                        object = OBJECT_TRAFFIC_LIGHT;
                         break;
                     case 2:
-                        Toast.makeText(getBaseContext(), "Add line", Toast.LENGTH_SHORT).show();
+                        isDrawingOverlay = true;
+                        object = OBJECT_LINE;
                         break;
                     case 3:
-                        Toast.makeText(getBaseContext(), "Add ATM", Toast.LENGTH_SHORT).show();
+                        isDrawingOverlay = true;
+                        object = OBJECT_ATM;
                         break;
                     case 4:
-                        Toast.makeText(getBaseContext(), "Add hospital", Toast.LENGTH_SHORT).show();
+                        isDrawingOverlay = true;
+                        object = OBJECT_HOSPITAL;
                         break;
                     case 5:
-                        Toast.makeText(getBaseContext(), "Undo change", Toast.LENGTH_SHORT).show();
+                        isDrawingOverlay = true;
+                        object = OBJECT_UNDO;
                         break;
                 }
             }
@@ -190,12 +286,11 @@ public class MapActivity extends AppCompatActivity {
         circleMenu.setOnMenuStatusChangeListener(new OnMenuStatusChangeListener() {
             @Override
             public void onMenuOpened() {
-                Toast.makeText(getBaseContext(), "Choose object", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getBaseContext(), "Choose an object", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onMenuClosed() {
-                Toast.makeText(getBaseContext(), "Exit edit", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -312,17 +407,19 @@ public class MapActivity extends AppCompatActivity {
             }
         });
 
-//        ImageButton btnLocation = (ImageButton) findViewById(R.id.location_track);
-//        btnLocation.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
+        ImageButton btnLocation = findViewById(R.id.location_track);
+        btnLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isDrawingOverlay = false;
+                Toast.makeText(getBaseContext(), isDrawingOverlay.toString(), Toast.LENGTH_LONG).show();
 //                if (currentLocation != null) {
 //                    mapController.setCenter(new GeoPoint(currentLocation));
 //                } else {
 //                    Toast.makeText(getBaseContext(), "Cannot access your current location", Toast.LENGTH_LONG).show();
 //                }
-//            }
-//        });
+            }
+        });
     }
 
     private void setupBottomNavbar() {
@@ -336,9 +433,6 @@ public class MapActivity extends AppCompatActivity {
 
     /** Init map view **/
     private void setupMapView() {
-
-        ImageButton btnLocation = findViewById(R.id.location_track);
-
         map_view = findViewById(R.id.mapview);
         map_view.setTileSource(TileSourceFactory.MAPNIK);
         // Enable map clickable
@@ -384,19 +478,16 @@ public class MapActivity extends AppCompatActivity {
             location.setLatitude(DEFAULT_LATITUDE);
             location.setLongitude(DEFAULT_LONGITUDE);
             updateCurrentLocation(new GeoPoint(location));
+            // Overlay
+//            MyLocationNewOverlay locationNewOverlay;
+//            Drawable drawable = this.getResources().getDrawable(R.drawable.marker_default);
+//            ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
+//            OverlayItem item = new OverlayItem("Hospital", "I am a hospital haha", (IGeoPoint) location);
+//            item.setMarker(drawable);
+//            items.add(item);
+
         }
 
-        final Location finalLocation = location;
-        btnLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (currentLocation != null) {
-                    mapController.setCenter(new GeoPoint(finalLocation));
-                } else {
-                    Toast.makeText(getBaseContext(), "Cannot access your current location", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
     }
 
     public void updateCurrentLocation(GeoPoint geoPoint) {

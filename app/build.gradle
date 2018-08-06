@@ -40,6 +40,7 @@ dependencies {
 
     // OSM Api
     implementation 'org.osmdroid:osmdroid-android:6.0.1'
+    implementation 'com.github.MKergall:osmbonuspack:6.5.2'
 
     // Google Maps API
     implementation 'com.google.android.gms:play-services-maps:15.0.1'

@@ -19,16 +19,16 @@ public class OnboardingActivity extends AppCompatActivity {
     private Button mBackBtn;
     private int mCurrentPage;
 
-    private OnboardingHelper onboardingHelper;
+    OnboardingHelper onboardingHelper;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_onboarding);
 
-        vpOnboarding = (ViewPager)findViewById(R.id.onboarding_viewPager);
-        mDotLayout = (LinearLayout)findViewById(R.id.onboarding_linearLayout);
-        mNextBtn = (Button)findViewById(R.id.onboarding_next);
-        mBackBtn = (Button)findViewById(R.id.onboarding_prev);
+        vpOnboarding = findViewById(R.id.onboarding_viewPager);
+        mDotLayout = findViewById(R.id.onboarding_linearLayout);
+        mNextBtn = findViewById(R.id.onboarding_next);
+        mBackBtn = findViewById(R.id.onboarding_prev);
 
         onboardingHelper = new OnboardingHelper(this);
         vpOnboarding.setAdapter(onboardingHelper);

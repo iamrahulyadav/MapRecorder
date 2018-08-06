@@ -58,7 +58,8 @@
             android:name=".SettingsActivity"
             android:launchMode="standard" />
         <activity android:name=".EditProfileActivity" />
-        <activity android:name=".EditMapItemActivity"></activity>
+        <activity android:name=".EditMapItemActivity" />
+        <activity android:name=".LoadMapActivity"></activity>
     </application>
 
 </manifest>
