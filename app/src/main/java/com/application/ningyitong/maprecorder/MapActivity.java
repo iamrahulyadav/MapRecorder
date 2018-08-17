@@ -5,15 +5,21 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.NetworkOnMainThreadException;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.BoringLayout;
@@ -21,6 +27,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import org.osmdroid.api.IGeoPoint;
+import org.osmdroid.bonuspack.kml.KmlDocument;
+import org.osmdroid.bonuspack.kml.KmlFeature;
+import org.osmdroid.bonuspack.kml.KmlPlacemark;
+import org.osmdroid.bonuspack.kml.KmlTrack;
+import org.osmdroid.bonuspack.kml.LineStyle;
+import org.osmdroid.bonuspack.kml.Style;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.DelayedMapListener;
 import org.osmdroid.events.MapEventsReceiver;
@@ -29,8 +41,10 @@ import org.osmdroid.events.ScrollEvent;
 import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.util.NetworkLocationIgnorer;
 import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
 import org.osmdroid.views.overlay.MapEventsOverlay;
@@ -43,6 +57,7 @@ import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 import org.osmdroid.views.overlay.infowindow.BasicInfoWindow;
+import org.osmdroid.views.overlay.mylocation.DirectedLocationOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
@@ -63,15 +78,17 @@ import com.hitomi.cmlibrary.CircleMenu;
 import com.hitomi.cmlibrary.OnMenuSelectedListener;
 import com.hitomi.cmlibrary.OnMenuStatusChangeListener;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
-public class MapActivity extends AppCompatActivity {
+public class MapActivity extends AppCompatActivity implements MapEventsReceiver, LocationListener {
     final double DEFAULT_LATITUDE = 44.445883;
     final double DEFAULT_LONGITUDE = 26.040963;
 
@@ -82,12 +99,15 @@ public class MapActivity extends AppCompatActivity {
     private ImageButton recordingGpsBtn;
     public Boolean isRecording = false;
     private Dialog saveMapDialog;
+    float mAzimuthAngleSpeed = 0.0f;
 
     public Boolean isDrawingOverlay = false;
-
+    KmlDocument kmlDocument;
+    FolderOverlay mKmlOverlay;
     // Location API
+    GeoPoint startPoint, destinationPoint;
+    ArrayList<GeoPoint> viaPoints;
     LocationManager locationManager;
-    private OverlayItem lastPosition = null;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private SettingsClient settingsClient;
     private LocationRequest locationRequest;
@@ -95,8 +115,8 @@ public class MapActivity extends AppCompatActivity {
     private LocationCallback locationCallback;
     private GeoPoint currentLocation;
     OsmLocationUpdateHelper locationUpdateHelper;
+    DirectedLocationOverlay directedLocationOverlay;
     private ArrayList<OverlayItem> locationItems = new ArrayList<OverlayItem>();
-    MapEventsReceiver mapEventsReceiver;
 
     // Location update interval
     private static final long UPDATE_INTERVAL = 10000;
@@ -139,7 +159,7 @@ public class MapActivity extends AppCompatActivity {
         // Setup bottom nav-bar
         setupBottomNavbar();
         // Initial OSM
-        setupMapView();
+        setupMapView(savedInstanceState);
 
         MyLocationNewOverlay myLocationoverlay = new MyLocationNewOverlay(map_view);
         myLocationoverlay.enableFollowLocation();
@@ -157,29 +177,9 @@ public class MapActivity extends AppCompatActivity {
         // Setup circle menu
         setupCircleMenu();
 
-        mapEventsReceiver = new MapEventsReceiver() {
-            @Override
-            public boolean singleTapConfirmedHelper(GeoPoint p) {
-//                Toast.makeText(getBaseContext(), "Put " + object + " " + p.getLatitude() + "-" + p.getLongitude(), Toast.LENGTH_LONG).show();
+        // KML
+        kmlDocument = new KmlDocument();
 
-//                    Polygon circle = new Polygon(map_view);
-//                    circle.setPoints(Polygon.pointsAsCircle(p, 2000.0));
-//
-//                    circle.setFillColor(0x12121212);
-//                    circle.setStrokeColor(Color.RED);
-//                    circle.setStrokeWidth(2);
-                if (!object.equals("") || !object.equals(null))
-                    drawMarker(p, object);
-
-                return false;
-            }
-            @Override
-            public boolean longPressHelper(GeoPoint p) {
-                return false;
-            }
-        };
-        MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(getBaseContext(), mapEventsReceiver);
-        map_view.getOverlays().add(mapEventsOverlay);
     }
 
     /** Draw Marker **/
@@ -216,8 +216,8 @@ public class MapActivity extends AppCompatActivity {
         }
         marker.setTitle(object);
         map_view.getOverlays().add(marker);
-
         map_view.invalidate();
+        kmlDocument.mKmlRoot.addOverlay(marker, kmlDocument);
     }
 
     /** Setup recording button **/
@@ -229,15 +229,29 @@ public class MapActivity extends AppCompatActivity {
                 if (isRecording) {
                     isRecording = false;
                     recordingGpsBtn.setImageResource(R.drawable.ic_ready_record_24dp);
+                    recordingGpsBtn.setKeepScreenOn(false);
                     Toast.makeText(getBaseContext(), "Recording stopped", Toast.LENGTH_SHORT).show();
-                    // TODO
+
                 } else {
                     isRecording = true;
                     recordingGpsBtn.setImageResource(R.drawable.ic_recording_24dp);
+                    recordingGpsBtn.setKeepScreenOn(true);
                     Toast.makeText(getBaseContext(), "Recording started", Toast.LENGTH_SHORT).show();
+
+                    // Create start marker
+                    //addStartMarker();
+                    if (directedLocationOverlay.isEnabled() && directedLocationOverlay.getLocation() != null)
+                        map_view.getController().animateTo(directedLocationOverlay.getLocation());
                 }
             }
         });
+    }
+    /** Create start marker **/
+    private void addStartMarker() {
+//        Marker startMarker = new Marker(map_view);
+//        startMarker.setPosition(currentLocation);
+//        startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+//        map_view.getOverlays().add(startMarker);
     }
 
     /** Setup circle menu **/
@@ -344,37 +358,26 @@ public class MapActivity extends AppCompatActivity {
                 String owner = mapOwner.getText().toString();
                 String description = mapDescription.getText().toString();
                 String date = mapDate.getText().toString();
-                String tracking = "gps file path";
-
-                // Save geo points
-                FileOutputStream fileOutputStream = null;
-                try {
-                    fileOutputStream = openFileOutput(name, MODE_PRIVATE);
-                    fileOutputStream.write("dddd".getBytes());
-
-                    Toast.makeText(getBaseContext(), "Save path: " + getFilesDir() + "/" + name, Toast.LENGTH_LONG).show();
-                    tracking = getFilesDir() + "/" + name;
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (fileOutputStream != null) {
-                        try {
-                            fileOutputStream.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+                String tracking = name + "_" + owner + "_" + date + ".kml";
 
                 if (name.equals("")) {
                     mapName.setError("Input map name");
                     return;
                 }
+//                if (owner.equals("")) {
+//                    mapOwner.setError("Input map owner");
+//                    return;
+//                }
+//                if (date.equals("")) {
+//                    mapDate.setError("Input map record date");
+//                    return;
+//                }
+
                 if (db.checkMap(name)) {
                     Boolean insert = db.saveMap(name, city, description, owner, date, tracking, userID);
                     if (insert) {
+                        // Save map overlay
+                        saveKmlFile(tracking);
                         Toast.makeText(getBaseContext(), "Save map info successfully", Toast.LENGTH_SHORT).show();
                         saveMapDialog.dismiss();
                     } else {
@@ -387,6 +390,16 @@ public class MapActivity extends AppCompatActivity {
         });
         saveMapDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         saveMapDialog.show();
+    }
+    /** Save KML file **/
+    private void saveKmlFile(String fileName) {
+        boolean saved;
+        File file = kmlDocument.getDefaultPathForAndroid(fileName);
+        saved = kmlDocument.saveAsKML(file);
+        if (saved)
+            Toast.makeText(this, fileName + " saved", Toast.LENGTH_SHORT).show();
+        else
+            Toast.makeText(this, "Unable to save "+fileName, Toast.LENGTH_SHORT).show();
     }
 
     private void setupMapControlBtn() {
@@ -411,16 +424,12 @@ public class MapActivity extends AppCompatActivity {
         btnLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                isDrawingOverlay = false;
-                Toast.makeText(getBaseContext(), isDrawingOverlay.toString(), Toast.LENGTH_LONG).show();
-//                if (currentLocation != null) {
-//                    mapController.setCenter(new GeoPoint(currentLocation));
-//                } else {
-//                    Toast.makeText(getBaseContext(), "Cannot access your current location", Toast.LENGTH_LONG).show();
-//                }
+                if (directedLocationOverlay.isEnabled()&& directedLocationOverlay.getLocation() != null)
+                    map_view.getController().animateTo(directedLocationOverlay.getLocation());
             }
         });
     }
+
 
     private void setupBottomNavbar() {
         // Bottom nav-bar
@@ -432,7 +441,7 @@ public class MapActivity extends AppCompatActivity {
     }
 
     /** Init map view **/
-    private void setupMapView() {
+    private void setupMapView(Bundle savedInstanceState) {
         map_view = findViewById(R.id.mapview);
         map_view.setTileSource(TileSourceFactory.MAPNIK);
         // Enable map clickable
@@ -457,44 +466,79 @@ public class MapActivity extends AppCompatActivity {
         scaleBarOverlay.setCentred(true);
         scaleBarOverlay.setScaleBarOffset(this.getResources().getDisplayMetrics().widthPixels / 2, 10);
         map_view.getOverlays().add(scaleBarOverlay);
+        // MapEventsReceiver
+        MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(this);
+        map_view.getOverlays().add(mapEventsOverlay);
         // Location
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        locationUpdateHelper = new OsmLocationUpdateHelper(this);
-        Location location = null;
+        directedLocationOverlay = new DirectedLocationOverlay(this);
+        map_view.getOverlays().add(directedLocationOverlay);
 
-        for (String provider : locationManager.getProviders(true)) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
+        if (savedInstanceState == null){
+            Location location = null;
+//            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                return;
+//            }
+//            if (locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER) != null)
+//                location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+//            if (location == null && locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER) != null)
+//                location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+//
+//            if (location != null)
+//                onLocationChanged(location);
+//            else
+//                directedLocationOverlay.setEnabled(false);
+            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            locationUpdateHelper = new OsmLocationUpdateHelper(this);
+            for (String provider : locationManager.getProviders(true)) {
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                location = locationManager.getLastKnownLocation(provider);
+                if (location != null) {
+                    locationManager.requestLocationUpdates(provider, 0, 0,locationUpdateHelper);
+                    break;
+                }
             }
-            location = locationManager.getLastKnownLocation(provider);
-            if (location != null) {
-                locationManager.requestLocationUpdates(provider, 0, 0,locationUpdateHelper);
-                break;
+
+            if (location == null) {
+                location = new Location(LocationManager.GPS_PROVIDER);
+                location.setLatitude(DEFAULT_LATITUDE);
+                location.setLongitude(DEFAULT_LONGITUDE);
             }
+
+            startPoint = null;
+            destinationPoint = null;
+            viaPoints = new ArrayList<GeoPoint>();
+        } else {
+            directedLocationOverlay.setLocation((GeoPoint)savedInstanceState.getParcelable("location"));
+            startPoint = savedInstanceState.getParcelable("start");
+            destinationPoint = savedInstanceState.getParcelable("destination");
+            viaPoints = savedInstanceState.getParcelableArrayList("viapoints");
         }
 
-        if (location == null) {
-            location = new Location(LocationManager.GPS_PROVIDER);
-            location.setLatitude(DEFAULT_LATITUDE);
-            location.setLongitude(DEFAULT_LONGITUDE);
-            updateCurrentLocation(new GeoPoint(location));
-            // Overlay
-//            MyLocationNewOverlay locationNewOverlay;
-//            Drawable drawable = this.getResources().getDrawable(R.drawable.marker_default);
-//            ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
-//            OverlayItem item = new OverlayItem("Hospital", "I am a hospital haha", (IGeoPoint) location);
-//            item.setMarker(drawable);
-//            items.add(item);
+//        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+//        locationUpdateHelper = new OsmLocationUpdateHelper(this);
+//        Location location = null;
 
-        }
-
+//        for (String provider : locationManager.getProviders(true)) {
+//            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                return;
+//            }
+//            location = locationManager.getLastKnownLocation(provider);
+//            if (location != null) {
+//                locationManager.requestLocationUpdates(provider, 0, 0,locationUpdateHelper);
+//                break;
+//            }
+//        }
+//
+//        if (location == null) {
+//            location = new Location(LocationManager.GPS_PROVIDER);
+//            location.setLatitude(DEFAULT_LATITUDE);
+//            location.setLongitude(DEFAULT_LONGITUDE);
+//        }
     }
 
-    public void updateCurrentLocation(GeoPoint geoPoint) {
-        Toast.makeText(getBaseContext(), "Latituddddddddddddddde = " + geoPoint.getLatitude() * 1e6 + " Longitude = " + geoPoint.getLongitude() * 1e6, Toast.LENGTH_SHORT).show();
-    }
-
-    // Bottom navigation bar function
+    /** Bottom navigation bar function **/
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -527,4 +571,156 @@ public class MapActivity extends AppCompatActivity {
             return false;
         }
     };
+
+
+    /** Location Listener **/
+    private final NetworkLocationIgnorer networkLocationIgnorer = new NetworkLocationIgnorer();
+    long lastTime;
+    double speed;
+    @Override
+    public void onLocationChanged(final Location location) {
+        long currentTime = System.currentTimeMillis();
+        if (networkLocationIgnorer.shouldIgnore(location.getProvider(), currentTime))
+            return;
+        double dT = currentTime - lastTime;
+        if (dT < 100.0){
+            //Toast.makeText(this, pLoc.getProvider()+" dT="+dT, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        lastTime = currentTime;
+
+        GeoPoint newLocation = new GeoPoint(location);
+        if (!directedLocationOverlay.isEnabled()){
+            //we get the location for the first time:
+            directedLocationOverlay.setEnabled(true);
+            map_view.getController().animateTo(newLocation);
+        }
+
+        GeoPoint prevLocation = directedLocationOverlay.getLocation();
+        directedLocationOverlay.setLocation(newLocation);
+        directedLocationOverlay.setAccuracy((int)location.getAccuracy());
+
+        if (prevLocation != null && location.getProvider().equals(LocationManager.GPS_PROVIDER)){
+            speed = location.getSpeed() * 3.6;
+            long speedInt = Math.round(speed);
+            TextView speedTxt = (TextView)findViewById(R.id.speed);
+            speedTxt.setText(speedInt + " km/h");
+
+            //TODO: check if speed is not too small
+            if (speed >= 0.1){
+                mAzimuthAngleSpeed = location.getBearing();
+                directedLocationOverlay.setBearing(mAzimuthAngleSpeed);
+            }
+        }
+
+        if (isRecording){
+            //keep the map view centered on current location:
+            map_view.getController().animateTo(newLocation);
+            map_view.setMapOrientation(-mAzimuthAngleSpeed);
+            recordCurrentLocationInTrack("my_track", "My Track", newLocation);
+
+        } else {
+            //just redraw the location overlay:
+            map_view.invalidate();
+        }
+    }
+
+    static int[] TrackColor = {
+            Color.CYAN-0x20000000, Color.BLUE-0x20000000, Color.MAGENTA-0x20000000, Color.RED-0x20000000, Color.YELLOW-0x20000000
+    };
+    KmlTrack createTrack(String id, String name) {
+        KmlTrack t = new KmlTrack();
+        KmlPlacemark p = new KmlPlacemark();
+        p.mId = id;
+        p.mName = name;
+        p.mGeometry = t;
+        kmlDocument.mKmlRoot.add(p);
+        //set a color to this track by creating a style:
+        Style s = new Style();
+        int color;
+        try {
+            color = Integer.parseInt(id);
+            color = color % TrackColor.length;
+            color = TrackColor[color];
+        } catch (NumberFormatException e) {
+            color = Color.GREEN-0x20000000;
+        }
+        s.mLineStyle = new LineStyle(color, 8.0f);
+        String styleId = kmlDocument.addStyle(s);
+        p.mStyle = styleId;
+        return t;
+    }
+    Style buildDefaultStyle(){
+        Drawable defaultKmlMarker = ResourcesCompat.getDrawable(getResources(), R.drawable.marker_default, null);
+        Bitmap bitmap = ((BitmapDrawable)defaultKmlMarker).getBitmap();
+        return new Style(bitmap, 0x901010AA, 3.0f, 0x20AA1010);
+    }
+    void updateUIWithKml(){
+        if (mKmlOverlay != null){
+            mKmlOverlay.closeAllInfoWindows();
+            map_view.getOverlays().remove(mKmlOverlay);
+        }
+        mKmlOverlay = (FolderOverlay)kmlDocument.mKmlRoot.buildOverlay(map_view, buildDefaultStyle(), null, kmlDocument);
+        map_view.getOverlays().add(mKmlOverlay);
+        map_view.invalidate();
+    }
+
+    void recordCurrentLocationInTrack(String trackId, String trackName, GeoPoint currentLocation) {
+        //Find the KML track in the current KML structure - and create it if necessary:
+        KmlTrack t;
+        KmlFeature f = kmlDocument.mKmlRoot.findFeatureId(trackId, false);
+        if (f == null)
+            t = createTrack(trackId, trackName);
+        else if (!(f instanceof KmlPlacemark))
+            //id already defined but is not a PlaceMark
+            return;
+        else {
+            KmlPlacemark p = (KmlPlacemark)f;
+            if (!(p.mGeometry instanceof KmlTrack))
+                //id already defined but is not a Track
+                return;
+            else
+                t = (KmlTrack) p.mGeometry;
+        }
+        //TODO check if current location is really different from last point of the track
+        //record in the track the current location at current time:
+        t.add(currentLocation, new Date());
+        //refresh KML:
+        updateUIWithKml();
+    }
+
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
+    }
+
+    @Override
+    public boolean singleTapConfirmedHelper(GeoPoint p) {
+        Polygon circle = new Polygon(map_view);
+        circle.setPoints(Polygon.pointsAsCircle(p, 2000.0));
+        circle.setFillColor(0x12121212);
+        circle.setStrokeColor(Color.RED);
+        circle.setStrokeWidth(2);
+
+        if (!object.equals("") || !object.equals(null)) {
+            Toast.makeText(getBaseContext(), "Put " + object + " " + p.getLatitude() + "-" + p.getLongitude(), Toast.LENGTH_LONG).show();
+            drawMarker(p, object);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean longPressHelper(GeoPoint p) {
+        return false;
+    }
 }

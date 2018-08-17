@@ -38,8 +38,8 @@ public class EditMapItemActivity extends AppCompatActivity {
         Intent receivedIntent = getIntent();
         selectedMapID = receivedIntent.getIntExtra("id", -1);
         selectedMapName = receivedIntent.getStringExtra("name");
-//        selectedMapUrl = receivedIntent.getStringExtra("tracking");
-        selectedMapUrl = "paristour";
+        selectedMapUrl = receivedIntent.getStringExtra("tracking");
+//        selectedMapUrl = "paristour";
 
         mapName.setText(selectedMapName);
         showMapDetails(selectedMapID, selectedMapName);

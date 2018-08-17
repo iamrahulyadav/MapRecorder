@@ -35,6 +35,7 @@ import org.osmdroid.views.overlay.ScaleBarOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class LoadMapActivity extends AppCompatActivity {
@@ -110,15 +111,17 @@ public class LoadMapActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            progressDialog.setMessage("Loading Map...");
+            progressDialog.setMessage("Loading Map " + mapUrl);
             progressDialog.show();
         }
 
         @Override
         protected Void doInBackground(Void... voids) {
             kmlDocument = new KmlDocument();
-            kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.paristour), null);
-            kmlDocument.parseKMLStream(getResources().openRawResource(getResources().getIdentifier(mapUrl, "raw", context.getPackageName())),null);
+            File file = kmlDocument.getDefaultPathForAndroid("file:/" + mapUrl);
+            kmlDocument.parseKMLFile(file);
+//            kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.paristour), null);
+//            kmlDocument.parseKMLStream(getResources().openRawResource(getResources().getIdentifier(mapUrl, "raw", context.getPackageName())),null);
 
             FolderOverlay kmlOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(map_view, null, null, kmlDocument);
             map_view.getOverlays().add(kmlOverlay);
@@ -130,7 +133,10 @@ public class LoadMapActivity extends AppCompatActivity {
             progressDialog.dismiss();
             map_view.invalidate();
             BoundingBox bb = kmlDocument.mKmlRoot.getBoundingBox();
-            map_view.zoomToBoundingBox(bb, true);
+            if (bb != null) {
+                map_view.zoomToBoundingBox(bb, true);
+            }
+            //map_view.zoomToBoundingBox(bb, true);
 //            mapView.getController().setCenter(bb.getCenter());
             super.onPostExecute(aVoid);
         }

@@ -24,7 +24,7 @@ public class OsmLocationUpdateHelper implements LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
-//        Toast.makeText(mapActivity, "Latitude = " + location.getLatitude() * 1e6 + " Longitude = " + location.getLongitude() * 1e6, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(mapActivity, "Latitude = " + location.getLatitude() * 1e6 + " Longitude = " + location.getLongitude() * 1e6, Toast.LENGTH_SHORT).show();
 
         if (location != null) {
             if (mapActivity.isRecording) {
@@ -34,7 +34,7 @@ public class OsmLocationUpdateHelper implements LocationListener {
                     int latitude = (int) (location.getLatitude() * 1E6);
                     int longitude = (int) (location.getLongitude() * 1E6);
                     GeoPoint point = new GeoPoint(latitude, longitude);
-                    mapActivity.updateCurrentLocation(point);
+                    //mapActivity.updateCurrentLocation(point);
                     Toast.makeText(mapActivity, "Latitude = " + location.getLatitude() * 1e6 + " Longitude = " + location.getLongitude() * 1e6, Toast.LENGTH_SHORT).show();
 
                     gpsDataList.add(point);
