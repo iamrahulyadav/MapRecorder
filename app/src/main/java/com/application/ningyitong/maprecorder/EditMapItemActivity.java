@@ -38,7 +38,7 @@ public class EditMapItemActivity extends AppCompatActivity {
         Intent receivedIntent = getIntent();
         selectedMapID = receivedIntent.getIntExtra("id", -1);
         selectedMapName = receivedIntent.getStringExtra("name");
-        selectedMapUrl = receivedIntent.getStringExtra("tracking");
+//        selectedMapUrl = tracking;
 //        selectedMapUrl = "paristour";
 
         mapName.setText(selectedMapName);
@@ -51,7 +51,7 @@ public class EditMapItemActivity extends AppCompatActivity {
                 Intent loadMapActivity = new Intent(EditMapItemActivity.this, LoadMapActivity.class);
                 loadMapActivity.putExtra("id", selectedMapID);
                 loadMapActivity.putExtra("name", selectedMapName);
-                loadMapActivity.putExtra("url", selectedMapUrl);
+                loadMapActivity.putExtra("tracking", selectedMapUrl);
                 startActivity(loadMapActivity);
             }
         });
@@ -165,6 +165,7 @@ public class EditMapItemActivity extends AppCompatActivity {
                 mapOwner.setText(mapItem.getString(mapItem.getColumnIndex("owner")));
                 mapDate.setText(mapItem.getString(mapItem.getColumnIndex("date")));
                 mapDescription.setText(mapItem.getString(mapItem.getColumnIndex("description")));
+                selectedMapUrl = mapItem.getString(mapItem.getColumnIndex("tracking"));
             } else {
                 Toast.makeText(getBaseContext(), "Render data failed.", Toast.LENGTH_LONG).show();
             }

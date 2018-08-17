@@ -54,14 +54,6 @@
         tools:layout_editor_absoluteY="310dp"
         android:layout_alignParentRight="true">
 
-        <ImageButton
-            android:id="@+id/load_map_save_map"
-            style="@style/RoundMapButton"
-            android:onClick="ShowSaveMapDialog"
-            android:background="@android:color/background_light"
-            android:contentDescription="@string/map_control_edit"
-            map:srcCompat="@drawable/ic_save_24dp" />
-
     </LinearLayout>
 
     <LinearLayout
@@ -93,6 +85,12 @@
             android:contentDescription="@string/map_control_zoom_out"
             map:srcCompat="@drawable/ic_remove_circle_outline_black_24dp" />
 
+        <ImageButton
+            android:id="@+id/load_map_location_track"
+            style="@style/RoundMapButton"
+            android:background="@android:color/background_light"
+            android:contentDescription="@string/map_control_location"
+            map:srcCompat="@drawable/ic_my_location_black_24dp" />
 
     </LinearLayout>
 
