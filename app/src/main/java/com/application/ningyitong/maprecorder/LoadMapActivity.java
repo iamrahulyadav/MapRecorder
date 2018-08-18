@@ -4,9 +4,11 @@ import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.support.v4.content.ContextCompat;
@@ -29,15 +31,18 @@ import com.hitomi.cmlibrary.OnMenuStatusChangeListener;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
 import org.osmdroid.events.MapEventsReceiver;
+import org.osmdroid.tileprovider.tilesource.ITileSource;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.util.TileSystem;
 import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
+import org.osmdroid.views.overlay.TilesOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.mylocation.DirectedLocationOverlay;
@@ -45,7 +50,7 @@ import org.osmdroid.views.overlay.mylocation.DirectedLocationOverlay;
 import java.io.File;
 import java.util.ArrayList;
 
-public class LoadMapActivity extends AppCompatActivity {
+public class LoadMapActivity extends AppCompatActivity implements LocationListener{
 
     String mapTitle, mapUrl;
     // Define UI
@@ -57,22 +62,10 @@ public class LoadMapActivity extends AppCompatActivity {
     private IMapController mapController;
     private CircleMenu circleMenu;
     private Context context;
-//    private ImageButton recordingGpsBtn;
-//    public Boolean isRecording = false;
-//    private Dialog saveMapDialog;
 
     // Location API
     LocationManager locationManager;
-    private OverlayItem lastPosition = null;
-    private FusedLocationProviderClient fusedLocationProviderClient;
-    private SettingsClient settingsClient;
-    private LocationRequest locationRequest;
-    private LocationSettingsRequest locationSettingsRequest;
-    private LocationCallback locationCallback;
-    private GeoPoint currentLocation;
-//    OsmLocationUpdateHelper locationUpdateHelper;
-    private ArrayList<OverlayItem> locationItems = new ArrayList<OverlayItem>();
-    MapEventsReceiver mapEventsReceiver;
+
 
     // user session
     UserSessionManager session;
@@ -94,7 +87,7 @@ public class LoadMapActivity extends AppCompatActivity {
         mapTitle = receivedIntent.getStringExtra("name");
         mapUrl = receivedIntent.getStringExtra("tracking");
         // Initial OSM
-        setupMapView();
+        setupMapView(savedInstanceState);
         // Initial Zoom control button
         setupMapControlBtn();
         // Setup circle menu
@@ -102,13 +95,42 @@ public class LoadMapActivity extends AppCompatActivity {
 
         mapTitleText = findViewById(R.id.load_map_title);
         mapTitleText.setText(mapTitle);
-        //loadKML();
+        loadKML();
     }
 
     /** Load KML file **/
     private void loadKML() {
         new KmlLoader().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        GeoPoint newLocation = new GeoPoint(location);
+        if (!directedLocationOverlay.isEnabled()){
+            //we get the location for the first time:
+            directedLocationOverlay.setEnabled(true);
+            map_view.getController().animateTo(newLocation);
+        }
+        directedLocationOverlay.setLocation(newLocation);
+        directedLocationOverlay.setAccuracy((int)location.getAccuracy());
+        map_view.getController().animateTo(newLocation);
+    }
+
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
+    }
+
     class KmlLoader extends AsyncTask<Void, Void, Void> {
         ProgressDialog progressDialog = new ProgressDialog(context);
         KmlDocument kmlDocument;
@@ -191,77 +213,57 @@ public class LoadMapActivity extends AppCompatActivity {
     }
 
     /** Init map view **/
-    private void setupMapView() {
-//        map_view = findViewById(R.id.load_map_map_view);
-//        map_view.setTileSource(TileSourceFactory.MAPNIK);
-//        // Enable map clickable
-//        map_view.setClickable(true);
-//        // Disable builtin zoom controller
-//        map_view.setBuiltInZoomControls(false);
-//        // Enable touch control
-//        map_view.setMultiTouchControls(true);
-//        // Set zoom limitation
-//        map_view.setMinZoomLevel((double) 3);
-//        map_view.setMaxZoomLevel((double) 22);
-//        // Set map default zoom level
-//        mapController = (MapController) map_view.getController();
-//        mapController.setZoom(18);
-//        // Compass
-//        CompassOverlay compassOverlay = new CompassOverlay(this, new InternalCompassOrientationProvider(this), map_view);
-//        compassOverlay.enableCompass();
-//        compassOverlay.setCompassCenter(30, 55);
-//        map_view.getOverlays().add(compassOverlay);
-//        // Scale Bar
-//        ScaleBarOverlay scaleBarOverlay = new ScaleBarOverlay(map_view);
-//        scaleBarOverlay.setCentred(true);
-//        scaleBarOverlay.setScaleBarOffset(this.getResources().getDisplayMetrics().widthPixels / 2, 10);
-//        map_view.getOverlays().add(scaleBarOverlay);
-//
-//        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-//        GeoPoint temp = new GeoPoint(53.384f, -1.491f);
-//        mapController.setCenter(temp);
-//        // Create map location overlay
-//        directedLocationOverlay = new DirectedLocationOverlay(this);
-//        map_view.getOverlays().add(directedLocationOverlay);
+    private void setupMapView(Bundle savedInstanceState) {
         map_view = findViewById(R.id.load_map_map_view);
-        map_view.setTileSource(TileSourceFactory.MAPNIK);
-        map_view.setClickable(true);        // Enable map clickable
-        map_view.setBuiltInZoomControls(false);        // Disable builtin zoom controller
-        map_view.setMultiTouchControls(true);        // Enable touch control
-        map_view.setMinZoomLevel((double) 3);        // Set zoom minimise limitation
-        map_view.setMaxZoomLevel((double) 22);        // Set zoom maximise limitation
+        map_view.setTilesScaledToDpi(true);
+        map_view.setClickable(true);
+        map_view.setBuiltInZoomControls(false);
+        map_view.setMultiTouchControls(true);
+        map_view.setMinZoomLevel((double) 3);
+        map_view.setMaxZoomLevel((double) 22);
         mapController = map_view.getController();
-        mapController.setZoom((double) 18);        // Set map default zoom level
-        // Create Compass overlay
-        CompassOverlay compassOverlay = new CompassOverlay(this, new InternalCompassOrientationProvider(this), map_view);
-        compassOverlay.enableCompass();
-        compassOverlay.setCompassCenter(30, 55);
-        map_view.getOverlays().add(compassOverlay);
-        // Create Scale Bar overlay
+        mapController.setZoom((double) 18);
+//        map_view.setVerticalMapRepetitionEnabled(false);
+//        map_view.setScrollableAreaLimitLatitude(TileSystem.MaxLatitude,-TileSystem.MaxLatitude, 0/*map.getHeight()/2*/);
+
+        locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
+
+        mapController.setCenter(new GeoPoint(53.384f,-1.491f));
+        // Scale Bar
         ScaleBarOverlay scaleBarOverlay = new ScaleBarOverlay(map_view);
         scaleBarOverlay.setCentred(true);
         scaleBarOverlay.setScaleBarOffset(this.getResources().getDisplayMetrics().widthPixels / 2, 10);
         map_view.getOverlays().add(scaleBarOverlay);
-        // Initial MapEventsReceiver
-        // Create Location Manager
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        // Create map location overlay
+        // Compass
+        CompassOverlay compassOverlay = new CompassOverlay(this, new InternalCompassOrientationProvider(this), map_view);
+        compassOverlay.enableCompass();
+        compassOverlay.setCompassCenter(30, 55);
+        map_view.getOverlays().add(compassOverlay);
+
         directedLocationOverlay = new DirectedLocationOverlay(this);
         map_view.getOverlays().add(directedLocationOverlay);
 
+        if (savedInstanceState == null){
             Location location = null;
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 if (location == null)
                     location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             }
-
-        if (directedLocationOverlay.getLocation() == null){
-            Toast.makeText(getBaseContext(), "NULL", Toast.LENGTH_SHORT).show();
-        }
+            if (location != null) {
+                //location known:
+                onLocationChanged(location);
+            } else {
+                //no location known: hide myLocationOverlay
+                directedLocationOverlay.setEnabled(false);
+            }
             if (directedLocationOverlay.isEnabled()&& directedLocationOverlay.getLocation() != null){
                 mapController.animateTo(directedLocationOverlay.getLocation());
             }
+
+        } else {
+            directedLocationOverlay.setLocation((GeoPoint)savedInstanceState.getParcelable("location"));
+        }
 
     }
 
