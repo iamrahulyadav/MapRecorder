@@ -15,20 +15,16 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Environment;
-import android.os.NetworkOnMainThreadException;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.BoringLayout;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
 import org.osmdroid.bonuspack.kml.KmlFeature;
@@ -37,35 +33,22 @@ import org.osmdroid.bonuspack.kml.KmlTrack;
 import org.osmdroid.bonuspack.kml.LineStyle;
 import org.osmdroid.bonuspack.kml.Style;
 import org.osmdroid.config.Configuration;
-import org.osmdroid.events.DelayedMapListener;
 import org.osmdroid.events.MapEventsReceiver;
-import org.osmdroid.events.MapListener;
-import org.osmdroid.events.ScrollEvent;
-import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.tileprovider.MapTileProviderBase;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.util.NetworkLocationIgnorer;
-import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
-import org.osmdroid.views.overlay.ItemizedIconOverlay;
-import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
 import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
-import org.osmdroid.views.overlay.TilesOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
-import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
-import org.osmdroid.views.overlay.infowindow.BasicInfoWindow;
+import org.osmdroid.views.overlay.infowindow.InfoWindow;
 import org.osmdroid.views.overlay.mylocation.DirectedLocationOverlay;
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
-import android.app.Activity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -73,22 +56,11 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.SettingsClient;
 import com.hitomi.cmlibrary.CircleMenu;
 import com.hitomi.cmlibrary.OnMenuSelectedListener;
 import com.hitomi.cmlibrary.OnMenuStatusChangeListener;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.StringReader;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -120,6 +92,9 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
     private final String OBJECT_ATM = "ATM";
     private final String OBJECT_TRAFFIC_LIGHT = "Traffic Light";
     private final String OBJECT_LINE = "Line";
+    private final String OBJECT_HOTEL = "Hotel";
+    private final String OBJECT_SHOP = "Shop";
+    private final String OBJECT_HOUSE = "House";
     private final String OBJECT_UNDO = "Undo";
 
     String object = "";
@@ -186,19 +161,28 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         map_view.getOverlays().add(marker);
         switch (object) {
             case OBJECT_BUILDING:
-                marker.setIcon(getResources().getDrawable(R.drawable.ic_location_city_black_24dp));
+                marker.setIcon(getResources().getDrawable(R.drawable.ic_marker_building));
                 break;
             case OBJECT_ATM:
-                marker.setIcon(getResources().getDrawable(R.drawable.ic_local_atm_black_24dp));
+                marker.setIcon(getResources().getDrawable(R.drawable.ic_marker_atm));
                 break;
             case OBJECT_HOSPITAL:
-                marker.setIcon(getResources().getDrawable(R.drawable.ic_local_hospital_black_24dp));
+                marker.setIcon(getResources().getDrawable(R.drawable.ic_marker_hospital));
                 break;
             case OBJECT_LINE:
                 marker.setIcon(getResources().getDrawable(R.drawable.ic_local_atm_black_24dp));
                 break;
             case OBJECT_TRAFFIC_LIGHT:
-                marker.setIcon(getResources().getDrawable(R.drawable.ic_traffic_black_24dp));
+                marker.setIcon(getResources().getDrawable(R.drawable.ic_marker_traffic_light));
+                break;
+            case OBJECT_HOTEL:
+                marker.setIcon(getResources().getDrawable(R.drawable.ic_marker_hotel));
+                break;
+            case OBJECT_HOUSE:
+                marker.setIcon(getResources().getDrawable(R.drawable.ic_marker_home));
+                break;
+            case OBJECT_SHOP:
+                marker.setIcon(getResources().getDrawable(R.drawable.ic_marker_shop));
                 break;
             default:
                 break;
@@ -227,10 +211,12 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                     recordingGpsBtn.setKeepScreenOn(true);
                     Toast.makeText(getBaseContext(), "Recording started", Toast.LENGTH_SHORT).show();
 
-                    // Create start marker
-                    //addStartMarker(startPoint);
-                    if (directedLocationOverlay.isEnabled() && directedLocationOverlay.getLocation() != null)
+                    if (directedLocationOverlay.isEnabled() && directedLocationOverlay.getLocation() != null) {
                         map_view.getController().animateTo(directedLocationOverlay.getLocation());
+                        // Create start marker
+                        startPoint = directedLocationOverlay.getLocation();
+                        addStartMarker(startPoint);
+                    }
                 }
             }
         });
@@ -239,6 +225,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
     private void addStartMarker(GeoPoint startPoint) {
         Marker startMarker = new Marker(map_view);
         startMarker.setPosition(startPoint);
+        startMarker.setTitle("Start Point");
         startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         map_view.getOverlays().add(startMarker);
     }
@@ -252,6 +239,9 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                 .addSubMenu(Color.parseColor("#FF4B32"), R.drawable.ic_line_white_24dp)
                 .addSubMenu(Color.parseColor("#8A39FF"), R.drawable.ic_atm_white_24dp)
                 .addSubMenu(Color.parseColor("#FF6A00"), R.drawable.ic_hospital_white_24dp)
+                .addSubMenu(Color.parseColor("#FF4B32"), R.drawable.ic_hotel_white_24dp)
+                .addSubMenu(Color.parseColor("#8A39FF"), R.drawable.ic_home_white_24dp)
+                .addSubMenu(Color.parseColor("#FF6A00"), R.drawable.ic_shopping_cart_white_24dp)
                 .addSubMenu(Color.parseColor("#FF0000"), R.drawable.ic_undo_black_24dp);
 
         circleMenu.setOnMenuSelectedListener(new OnMenuSelectedListener() {
@@ -279,6 +269,18 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                         object = OBJECT_HOSPITAL;
                         break;
                     case 5:
+                        isDrawingOverlay = true;
+                        object = OBJECT_HOTEL;
+                        break;
+                    case 6:
+                        isDrawingOverlay = true;
+                        object = OBJECT_HOUSE;
+                        break;
+                    case 7:
+                        isDrawingOverlay = true;
+                        object = OBJECT_SHOP;
+                        break;
+                    case 8:
                         isDrawingOverlay = true;
                         object = OBJECT_UNDO;
                         break;
@@ -548,7 +550,6 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         }
     };
 
-
     /** Location Listener **/
     private final NetworkLocationIgnorer networkLocationIgnorer = new NetworkLocationIgnorer();
     long lastTime;
@@ -579,8 +580,10 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         if (prevLocation != null && location.getProvider().equals(LocationManager.GPS_PROVIDER)){
             speed = location.getSpeed() * 3.6;
             long speedInt = Math.round(speed);
-            TextView speedTxt = (TextView)findViewById(R.id.speed);
-            speedTxt.setText(speedInt + " km/h");
+            TextView speedTxt = findViewById(R.id.speed);
+            String speedString = String.format("%s km/h", speedInt);
+            speedTxt.setText(speedString);
+//            speedTxt.setText(speedInt + " km/h");
 
             //TODO: check if speed is not too small
             if (speed >= 0.1){
@@ -605,14 +608,14 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
             Color.CYAN-0x20000000, Color.BLUE-0x20000000, Color.MAGENTA-0x20000000, Color.RED-0x20000000, Color.YELLOW-0x20000000
     };
     KmlTrack createTrack(String id, String name) {
-        KmlTrack t = new KmlTrack();
-        KmlPlacemark p = new KmlPlacemark();
-        p.mId = id;
-        p.mName = name;
-        p.mGeometry = t;
-        kmlDocument.mKmlRoot.add(p);
+        KmlTrack kmlTrack = new KmlTrack();
+        KmlPlacemark kmlPlacemark = new KmlPlacemark();
+        kmlPlacemark.mId = id;
+        kmlPlacemark.mName = name;
+        kmlPlacemark.mGeometry = kmlTrack;
+        kmlDocument.mKmlRoot.add(kmlPlacemark);
         //set a color to this track by creating a style:
-        Style s = new Style();
+        Style style = new Style();
         int color;
         try {
             color = Integer.parseInt(id);
@@ -621,13 +624,13 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         } catch (NumberFormatException e) {
             color = Color.GREEN-0x20000000;
         }
-        s.mLineStyle = new LineStyle(color, 8.0f);
-        String styleId = kmlDocument.addStyle(s);
-        p.mStyle = styleId;
-        return t;
+        style.mLineStyle = new LineStyle(color, 8.0f);
+        kmlPlacemark.mStyle = kmlDocument.addStyle(style);
+        return kmlTrack;
     }
     Style buildDefaultStyle(){
         Drawable defaultKmlMarker = ResourcesCompat.getDrawable(getResources(), R.drawable.marker_default, null);
+        assert defaultKmlMarker != null;
         Bitmap bitmap = ((BitmapDrawable)defaultKmlMarker).getBitmap();
         return new Style(bitmap, 0x901010AA, 3.0f, 0x20AA1010);
     }
@@ -682,18 +685,12 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
 
     @Override
     public boolean singleTapConfirmedHelper(GeoPoint p) {
-        Polygon circle = new Polygon(map_view);
-        circle.setPoints(Polygon.pointsAsCircle(p, 2000.0));
-        circle.setFillColor(0x12121212);
-        circle.setStrokeColor(Color.RED);
-        circle.setStrokeWidth(2);
-        map_view.getOverlays().add(circle);
-        map_view.invalidate();
-        kmlDocument.mKmlRoot.addOverlay(circle, kmlDocument);
 
+        InfoWindow.closeAllInfoWindowsOn(map_view);
         if (!object.equals("")) {
             Toast.makeText(getBaseContext(), "Put " + object + " " + p.getLatitude() + "-" + p.getLongitude(), Toast.LENGTH_LONG).show();
             drawMarker(p, object);
+            object = "";
         }
         return false;
     }
@@ -701,5 +698,21 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
     @Override
     public boolean longPressHelper(GeoPoint p) {
         return false;
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        Configuration.getInstance().load(getApplicationContext(), PreferenceManager.getDefaultSharedPreferences(getApplicationContext()));
+        if (map_view!=null)
+            map_view.onResume();
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        Configuration.getInstance().save(getApplicationContext(), PreferenceManager.getDefaultSharedPreferences(getApplicationContext()));
+        if (map_view!=null)
+            map_view.onPause();
     }
 }
