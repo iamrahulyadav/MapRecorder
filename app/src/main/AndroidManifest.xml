@@ -53,13 +53,16 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDcCS9dfu48kaA9Eog5yeVfrKAohUFGWeE" />
+        <meta-data
+            android:name="com.google.android.apps.drive.APP_ID"
+            android:value="id=1234567890" />
 
         <activity
             android:name=".SettingsActivity"
             android:launchMode="standard" />
         <activity android:name=".EditProfileActivity" />
         <activity android:name=".EditMapItemActivity" />
-        <activity android:name=".LoadMapActivity"></activity>
+        <activity android:name=".LoadMapActivity" />
     </application>
 
 </manifest>

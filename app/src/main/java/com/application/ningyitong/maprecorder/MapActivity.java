@@ -7,7 +7,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -38,16 +40,19 @@ import org.osmdroid.tileprovider.MapTileProviderBase;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.util.NetworkLocationIgnorer;
+import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.views.overlay.Polygon;
+import org.osmdroid.views.overlay.PathOverlay;
+import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.infowindow.InfoWindow;
 import org.osmdroid.views.overlay.mylocation.DirectedLocationOverlay;
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import android.view.View;
 import android.widget.Button;
@@ -61,11 +66,16 @@ import com.hitomi.cmlibrary.OnMenuSelectedListener;
 import com.hitomi.cmlibrary.OnMenuStatusChangeListener;
 
 import java.io.File;
+import java.security.Policy;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
 public class MapActivity extends AppCompatActivity implements MapEventsReceiver, LocationListener {
     Database db;
+    protected ArrayList<GeoPoint> objectMarkers;
+    protected InfoWindow objectMarkerInfoWindow;
+    protected FolderOverlay folderOverlay;
     private MapView map_view;
     private IMapController mapController;
     private CircleMenu circleMenu;
@@ -76,11 +86,13 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
     SharedPreferences sharedPreferences;
     public Boolean isDrawingOverlay = false;
     KmlDocument kmlDocument;
-    FolderOverlay mKmlOverlay;
+    private Polyline routeLine;
+    private ArrayList<Location> routeLineLocation;
+//    FolderOverlay mKmlOverlay;
     // Location API
     GeoPoint startPoint, destinationPoint;
     LocationManager locationManager;
-
+    protected Polyline[] routeOverlay;
 //    OsmLocationUpdateHelper locationUpdateHelper;
     DirectedLocationOverlay directedLocationOverlay;
     // Location update interval
@@ -95,10 +107,11 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
     private final String OBJECT_HOTEL = "Hotel";
     private final String OBJECT_SHOP = "Shop";
     private final String OBJECT_HOUSE = "House";
-    private final String OBJECT_UNDO = "Undo";
 
+    private Boolean isDrawPolyline = false;
     String object = "";
-
+private Polyline polyline;
+    TextView drawPolylineText;
     // user session
     UserSessionManager session;
     int userID;
@@ -131,6 +144,12 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         // Initial OSM
         setupMapView(savedInstanceState);
 
+        // Set folder overlay: markers
+        folderOverlay = new FolderOverlay();
+        folderOverlay.setName("Map Markers");
+        map_view.getOverlays().add(folderOverlay);
+        updateUIWithObjectMarkers();
+
         // Set recording button
         setupRecordingBtn();
 
@@ -143,22 +162,52 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
 
         // KML
         kmlDocument = new KmlDocument();
+        MyLocationNewOverlay myLocationNewOverlay = new MyLocationNewOverlay(map_view);
 
+        drawPolylineText = findViewById(R.id.draw_polyline_status);
+    }
+
+    public void updateUIWithObjectMarkers() {
+        folderOverlay.closeAllInfoWindows();
+        folderOverlay.getItems().clear();
+        for (int i=0; i<objectMarkers.size(); i++) {
+            drawMarker(objectMarkers.get(i), object, -1);
+        }
+    }
+
+    class OnObjectMarkerDragListener implements Marker.OnMarkerDragListener {
+        @Override public void onMarkerDrag(Marker marker) {}
+        @Override public void onMarkerDragEnd(Marker marker) {
+            int index = (Integer)marker.getRelatedObject();
+            objectMarkers.set(index, marker.getPosition());
+            marker.setSnippet(marker.getPosition().getLatitude() + " " + marker.getPosition().getLongitude());
+        }
+
+        @Override
+        public void onMarkerDragStart(Marker marker) {
+        }
+    }
+    final OnObjectMarkerDragListener onObjectMarkerDragListener = new OnObjectMarkerDragListener();
+
+    public void deletePoint(int selectMarker) {
+//        folderOverlay.remove(objectMarkers[selectMarker]);
+        objectMarkers.remove(selectMarker);
+//        kmlDocument.mKmlRoot.removeItem(selectMarker);//TODO unreliable
+        updateUIWithObjectMarkers();
     }
 
     /** Draw Marker **/
-    private void drawMarker(GeoPoint p, String object) {
-        if (object.equals(""))
-            return;
+    public void drawMarker(GeoPoint p, String object, int index) {
 
-//        if (object.equals(OBJECT_UNDO)) {
-//            Toast.makeText(getBaseContext(), "Undo add Marker", Toast.LENGTH_LONG).show();
-//            map_view.getOverlayManager().remove(marker);
-//        }
         Marker marker = new Marker(map_view);
-        marker.setPosition(p);
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        map_view.getOverlays().add(marker);
+        objectMarkerInfoWindow = new ObjectMarkerInfoWindow(R.layout.marker_bubble, map_view);
+        marker.setInfoWindow(objectMarkerInfoWindow);
+        marker.setDraggable(true);
+        marker.setOnMarkerDragListener(onObjectMarkerDragListener);
+
+        marker.setTitle(object);
+        marker.setPosition(p);
         switch (object) {
             case OBJECT_BUILDING:
                 marker.setIcon(getResources().getDrawable(R.drawable.ic_marker_building));
@@ -168,9 +217,6 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                 break;
             case OBJECT_HOSPITAL:
                 marker.setIcon(getResources().getDrawable(R.drawable.ic_marker_hospital));
-                break;
-            case OBJECT_LINE:
-                marker.setIcon(getResources().getDrawable(R.drawable.ic_local_atm_black_24dp));
                 break;
             case OBJECT_TRAFFIC_LIGHT:
                 marker.setIcon(getResources().getDrawable(R.drawable.ic_marker_traffic_light));
@@ -187,10 +233,24 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
             default:
                 break;
         }
-        marker.setTitle(object);
-        map_view.getOverlays().add(marker);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        marker.setRelatedObject(index);
+        marker.setSnippet(p.getLatitude()+ " " + p.getLongitude());
+        folderOverlay.add(marker);
+
+//        map_view.getOverlays().add(marker);
         map_view.invalidate();
-        kmlDocument.mKmlRoot.addOverlay(marker, kmlDocument);
+//        kmlDocument.mKmlRoot.addOverlay(marker, kmlDocument);
+    }
+    /** Draw polyline **/
+    public void drawPolyline() {
+        isDrawPolyline = true;
+        drawPolylineText.setText("Long press to exit drawing mode...");
+        polyline = new Polyline();
+        polyline.setColor(Color.RED);
+        polyline.setWidth(15);
+        map_view.getOverlays().add(polyline);
+//        map_view.invalidate();
     }
 
     /** Setup recording button **/
@@ -201,10 +261,16 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
             public void onClick(View view) {
                 if (isRecording) {
                     isRecording = false;
+                    folderOverlay.add(routeLine);
                     recordingGpsBtn.setImageResource(R.drawable.ic_ready_record_24dp);
                     recordingGpsBtn.setKeepScreenOn(false);
                     Toast.makeText(getBaseContext(), "Recording stopped", Toast.LENGTH_SHORT).show();
-
+                    if (directedLocationOverlay.isEnabled() && directedLocationOverlay.getLocation() != null) {
+                        map_view.getController().animateTo(directedLocationOverlay.getLocation());
+                        // Create start marker
+                        destinationPoint = directedLocationOverlay.getLocation();
+                        addEndMarker(destinationPoint);
+                    }
                 } else {
                     isRecording = true;
                     recordingGpsBtn.setImageResource(R.drawable.ic_recording_24dp);
@@ -216,6 +282,11 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                         // Create start marker
                         startPoint = directedLocationOverlay.getLocation();
                         addStartMarker(startPoint);
+                        routeLineLocation = new ArrayList<>();
+                        routeLine = new Polyline();
+                        routeLine.setWidth(15);
+                        routeLine.addPoint(startPoint);
+                        map_view.getOverlays().add(routeLine);
                     }
                 }
             }
@@ -227,7 +298,25 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         startMarker.setPosition(startPoint);
         startMarker.setTitle("Start Point");
         startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        startMarker.setDraggable(true);
+//        startMarker.setOnMarkerDragListener(onObjectMarkerDragListener);
+        startMarker.setSnippet(startPoint.getLatitude()+ " " + startPoint.getLongitude());
         map_view.getOverlays().add(startMarker);
+//        kmlDocument.mKmlRoot.addOverlay(startMarker, kmlDocument);
+        folderOverlay.add(startMarker);
+    }
+    /** Create end marker **/
+    private void addEndMarker(GeoPoint endPoint) {
+        Marker endMarker = new Marker(map_view);
+        endMarker.setPosition(startPoint);
+        endMarker.setTitle("Start Point");
+        endMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        endMarker.setDraggable(true);
+//        endMarker.setOnMarkerDragListener(onObjectMarkerDragListener);
+        endMarker.setSnippet(startPoint.getLatitude()+ " " + startPoint.getLongitude());
+        map_view.getOverlays().add(endMarker);
+//        kmlDocument.mKmlRoot.addOverlay(endMarker, kmlDocument);
+        folderOverlay.add(endMarker);
     }
 
     /** Setup circle menu **/
@@ -241,8 +330,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                 .addSubMenu(Color.parseColor("#FF6A00"), R.drawable.ic_hospital_white_24dp)
                 .addSubMenu(Color.parseColor("#FF4B32"), R.drawable.ic_hotel_white_24dp)
                 .addSubMenu(Color.parseColor("#8A39FF"), R.drawable.ic_home_white_24dp)
-                .addSubMenu(Color.parseColor("#FF6A00"), R.drawable.ic_shopping_cart_white_24dp)
-                .addSubMenu(Color.parseColor("#FF0000"), R.drawable.ic_undo_black_24dp);
+                .addSubMenu(Color.parseColor("#FF6A00"), R.drawable.ic_shopping_cart_white_24dp);
 
         circleMenu.setOnMenuSelectedListener(new OnMenuSelectedListener() {
             @Override
@@ -257,8 +345,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                         object = OBJECT_TRAFFIC_LIGHT;
                         break;
                     case 2:
-                        isDrawingOverlay = true;
-                        object = OBJECT_LINE;
+                        drawPolyline();
                         break;
                     case 3:
                         isDrawingOverlay = true;
@@ -279,10 +366,6 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                     case 7:
                         isDrawingOverlay = true;
                         object = OBJECT_SHOP;
-                        break;
-                    case 8:
-                        isDrawingOverlay = true;
-                        object = OBJECT_UNDO;
                         break;
                 }
             }
@@ -313,6 +396,10 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
     public void ShowSaveMapDialog(View view) {
         if (isRecording) {
             Toast.makeText(getBaseContext(), "Please stop recording GPS first.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (isDrawPolyline) {
+            Toast.makeText(getBaseContext(), "Pleas stop draw line first (long press screen to exit draw line mode)", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -372,6 +459,11 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                 if (db.checkMap(name)) {
                     Boolean insert = db.saveMap(name, city, description, owner, date, tracking, userID);
                     if (insert) {
+                        if (routeOverlay != null) {
+                            for (int i=0; i<routeOverlay.length; i++)
+                                kmlDocument.mKmlRoot.addOverlay(routeOverlay[i],kmlDocument);
+                        }
+                        kmlDocument.mKmlRoot.addOverlay(folderOverlay, kmlDocument);
                         // Save map overlay
                         saveKmlFile(tracking);
                         Toast.makeText(getBaseContext(), "Save map info successfully", Toast.LENGTH_SHORT).show();
@@ -492,6 +584,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
             }
             startPoint = null;
             destinationPoint = null;
+            objectMarkers = new ArrayList<>();
 
             if (directedLocationOverlay.isEnabled()&& directedLocationOverlay.getLocation() != null){
                 mapController.animateTo(directedLocationOverlay.getLocation());
@@ -501,7 +594,9 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
             //TODO: restore other aspects of myLocationOverlay...
             startPoint = savedInstanceState.getParcelable("start");
             destinationPoint = savedInstanceState.getParcelable("destination");
+            objectMarkers = savedInstanceState.getParcelableArrayList("object_markers");
         }
+
     }
 
     /** Save map preferences **/
@@ -556,6 +651,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
     double speed;
     @Override
     public void onLocationChanged(final Location location) {
+        Toast.makeText(getBaseContext(), "Latitude = " + location.getLatitude() * 1e6 + " Longitude = " + location.getLongitude() * 1e6, Toast.LENGTH_SHORT).show();
         long currentTime = System.currentTimeMillis();
         if (networkLocationIgnorer.shouldIgnore(location.getProvider(), currentTime))
             return;
@@ -567,41 +663,41 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         lastTime = currentTime;
 
         GeoPoint newLocation = new GeoPoint(location);
-        if (!directedLocationOverlay.isEnabled()){
-            //we get the location for the first time:
-            directedLocationOverlay.setEnabled(true);
-            map_view.getController().animateTo(newLocation);
-        }
+//        if (!directedLocationOverlay.isEnabled()){
+//            //we get the location for the first time:
+//            directedLocationOverlay.setEnabled(true);
+//            map_view.getController().animateTo(newLocation);
+//        }
 
         GeoPoint prevLocation = directedLocationOverlay.getLocation();
         directedLocationOverlay.setLocation(newLocation);
         directedLocationOverlay.setAccuracy((int)location.getAccuracy());
 
-        if (prevLocation != null && location.getProvider().equals(LocationManager.GPS_PROVIDER)){
+//        if (prevLocation != null && location.getProvider().equals(LocationManager.GPS_PROVIDER)){
             speed = location.getSpeed() * 3.6;
             long speedInt = Math.round(speed);
             TextView speedTxt = findViewById(R.id.speed);
-            String speedString = String.format("%s km/h", speedInt);
+            String speedString = String.format("Speed: %s km/h", speedInt);
             speedTxt.setText(speedString);
-//            speedTxt.setText(speedInt + " km/h");
 
             //TODO: check if speed is not too small
             if (speed >= 0.1){
                 mAzimuthAngleSpeed = location.getBearing();
                 directedLocationOverlay.setBearing(mAzimuthAngleSpeed);
             }
-        }
+//        }
 
         if (isRecording){
-            //keep the map view centered on current location:
-            map_view.getController().animateTo(newLocation);
-            map_view.setMapOrientation(-mAzimuthAngleSpeed);
-            recordCurrentLocationInTrack("my_track", "My Track", newLocation);
-
-        } else {
-            //just redraw the location overlay:
-            map_view.invalidate();
+            if (speed >= 0.1) {
+                //keep the map view centered on current location:
+                map_view.getController().animateTo(newLocation);
+                map_view.setMapOrientation(-mAzimuthAngleSpeed);
+                recordCurrentLocationInTrack("my_track", "My Track", newLocation);
+                routeLine.addPoint(newLocation);
+                routeLineLocation.add(location);
+            }
         }
+        map_view.invalidate();
     }
 
     static int[] TrackColor = {
@@ -635,12 +731,12 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         return new Style(bitmap, 0x901010AA, 3.0f, 0x20AA1010);
     }
     void updateUIWithKml(){
-        if (mKmlOverlay != null){
-            mKmlOverlay.closeAllInfoWindows();
-            map_view.getOverlays().remove(mKmlOverlay);
+        if (folderOverlay != null){
+            folderOverlay.closeAllInfoWindows();
+            map_view.getOverlays().remove(folderOverlay);
         }
-        mKmlOverlay = (FolderOverlay)kmlDocument.mKmlRoot.buildOverlay(map_view, buildDefaultStyle(), null, kmlDocument);
-        map_view.getOverlays().add(mKmlOverlay);
+        folderOverlay = (FolderOverlay)kmlDocument.mKmlRoot.buildOverlay(map_view, buildDefaultStyle(), null, kmlDocument);
+        map_view.getOverlays().add(folderOverlay);
         map_view.invalidate();
     }
 
@@ -685,18 +781,29 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
 
     @Override
     public boolean singleTapConfirmedHelper(GeoPoint p) {
-
         InfoWindow.closeAllInfoWindowsOn(map_view);
         if (!object.equals("")) {
             Toast.makeText(getBaseContext(), "Put " + object + " " + p.getLatitude() + "-" + p.getLongitude(), Toast.LENGTH_LONG).show();
-            drawMarker(p, object);
+            objectMarkers.add(p);
+            drawMarker(p, object, objectMarkers.size()-1);
             object = "";
+        }
+
+        if (isDrawPolyline) {
+            polyline.addPoint(p);
+            map_view.invalidate();
         }
         return false;
     }
 
     @Override
     public boolean longPressHelper(GeoPoint p) {
+        if (isDrawPolyline){
+            isDrawPolyline = false;
+            folderOverlay.add(polyline);
+            Toast.makeText(getBaseContext(), "Exit draw polyline mode.", Toast.LENGTH_SHORT).show();
+            drawPolylineText.setText("");
+        }
         return false;
     }
 

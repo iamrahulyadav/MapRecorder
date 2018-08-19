@@ -23,13 +23,22 @@
         android:id="@+id/speed"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="30dp"
+        android:layout_marginBottom="60dp"
         android:text="Current speed"
         android:textColor="#000"
         android:textSize="20sp"
         android:textStyle="bold" />
-
+    <TextView
+        android:id="@+id/draw_polyline_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="90dp"
+        android:textColor="#000"
+        android:textSize="20sp"
+        android:textStyle="bold" />
     <com.hitomi.cmlibrary.CircleMenu
         android:id="@+id/edit_map_circle_menu"
         android:layout_width="wrap_content"

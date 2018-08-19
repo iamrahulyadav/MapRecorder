@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -12,10 +13,14 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import org.osmdroid.bonuspack.kml.KmlDocument;
+
+import java.io.File;
+
 public class EditMapItemActivity extends AppCompatActivity {
 
     Database db;
-    Button btnDelete, btnSave;
+    Button btnShare, btnDelete, btnSave;
     ImageButton btnBack, btnLoadMap;
     EditText mapName, mapCity, mapOwner, mapDescription, mapDate;
 
@@ -38,8 +43,6 @@ public class EditMapItemActivity extends AppCompatActivity {
         Intent receivedIntent = getIntent();
         selectedMapID = receivedIntent.getIntExtra("id", -1);
         selectedMapName = receivedIntent.getStringExtra("name");
-//        selectedMapUrl = tracking;
-//        selectedMapUrl = "paristour";
 
         mapName.setText(selectedMapName);
         showMapDetails(selectedMapID, selectedMapName);
@@ -53,6 +56,27 @@ public class EditMapItemActivity extends AppCompatActivity {
                 loadMapActivity.putExtra("name", selectedMapName);
                 loadMapActivity.putExtra("tracking", selectedMapUrl);
                 startActivity(loadMapActivity);
+            }
+        });
+
+        // Share btn
+        btnShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent sendIntent = new Intent(Intent.ACTION_SEND);
+                sendIntent.setType("text/plain");
+                String shareTitle = "Share KML map" + mapName.getText().toString();
+
+                String shareBody = "City: " + mapCity.getText().toString() + "/" +
+                        "Owner: " + mapOwner.getText().toString() + "/" +
+                        "Date: " + mapDate.getText().toString() + "/" +
+                        "Description: " + mapDescription.getText().toString();
+                sendIntent.putExtra(Intent.EXTRA_SUBJECT, shareTitle);
+                sendIntent.putExtra(Intent.EXTRA_TEXT, shareBody);
+                KmlDocument kmlDocument = new KmlDocument();
+                File file = kmlDocument.getDefaultPathForAndroid(selectedMapUrl);
+                sendIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+                startActivity(Intent.createChooser(sendIntent, "Share map using"));
             }
         });
 
@@ -77,6 +101,7 @@ public class EditMapItemActivity extends AppCompatActivity {
     /** Init view **/
     private void initView() {
         btnLoadMap = findViewById(R.id.map_item_load_btn);
+        btnShare = findViewById(R.id.map_item_share_btn);
         btnDelete = findViewById(R.id.map_item_delete_btn);
         btnSave = findViewById(R.id.map_item_save_btn);
         mapName = findViewById(R.id.map_item_title);
@@ -137,6 +162,10 @@ public class EditMapItemActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 db.deleteMap(selectedMapID);
+                KmlDocument kmlDocument = new KmlDocument();
+                File file = kmlDocument.getDefaultPathForAndroid(selectedMapUrl);
+                if (file.exists())
+                    file.delete();
                 Toast.makeText(getBaseContext(), mapName.getText().toString() + "has been removed from database.", Toast.LENGTH_LONG).show();
                 Intent intent_edit = new Intent(EditMapItemActivity.this, EditActivity.class);
                 startActivity(intent_edit);

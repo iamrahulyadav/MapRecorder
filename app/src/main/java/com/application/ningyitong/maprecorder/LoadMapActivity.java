@@ -147,8 +147,6 @@ public class LoadMapActivity extends AppCompatActivity implements LocationListen
             kmlDocument = new KmlDocument();
             File file = kmlDocument.getDefaultPathForAndroid(mapUrl);
             kmlDocument.parseKMLFile(file);
-//            kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.paristour), null);
-//            kmlDocument.parseKMLStream(getResources().openRawResource(getResources().getIdentifier(mapUrl, "raw", context.getPackageName())),null);
 
             FolderOverlay kmlOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(map_view, null, null, kmlDocument);
             map_view.getOverlays().add(kmlOverlay);
@@ -159,10 +157,15 @@ public class LoadMapActivity extends AppCompatActivity implements LocationListen
         protected void onPostExecute(Void aVoid) {
             progressDialog.dismiss();
             map_view.invalidate();
-            BoundingBox bb = kmlDocument.mKmlRoot.getBoundingBox();
-            if (bb != null) {
-                map_view.zoomToBoundingBox(bb, true);
+            try {
+                BoundingBox bb = kmlDocument.mKmlRoot.getBoundingBox();
+                if (bb != null) {
+                    map_view.zoomToBoundingBox(bb, true);
+                }
+            } catch (Exception exception){
+                Toast.makeText(getBaseContext(), "KML map Bounding Box Error, you still can view it", Toast.LENGTH_SHORT).show();
             }
+
             //map_view.zoomToBoundingBox(bb, true);
 //            mapView.getController().setCenter(bb.getCenter());
             super.onPostExecute(aVoid);
