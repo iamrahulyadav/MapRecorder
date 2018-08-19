@@ -65,12 +65,14 @@ public class EditMapItemActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent sendIntent = new Intent(Intent.ACTION_SEND);
                 sendIntent.setType("text/plain");
-                String shareTitle = "Share KML map" + mapName.getText().toString();
+                String shareTitle = "Share KML Map" + mapName.getText().toString();
 
-                String shareBody = "City: " + mapCity.getText().toString() + "/" +
+                String shareBody = "Map Title: " + mapName.getText().toString() + "/" +
+                        "City: " + mapCity.getText().toString() + "/" +
                         "Owner: " + mapOwner.getText().toString() + "/" +
                         "Date: " + mapDate.getText().toString() + "/" +
-                        "Description: " + mapDescription.getText().toString();
+                        "Description: " + mapDescription.getText().toString() + "/" +
+                        "From Map Recorder";
                 sendIntent.putExtra(Intent.EXTRA_SUBJECT, shareTitle);
                 sendIntent.putExtra(Intent.EXTRA_TEXT, shareBody);
                 KmlDocument kmlDocument = new KmlDocument();
