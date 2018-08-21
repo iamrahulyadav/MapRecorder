@@ -60,7 +60,6 @@ public class LoadMapActivity extends AppCompatActivity implements LocationListen
     Database db;
     private MapView map_view;
     private IMapController mapController;
-    private CircleMenu circleMenu;
     private Context context;
 
     // Location API
@@ -172,48 +171,6 @@ public class LoadMapActivity extends AppCompatActivity implements LocationListen
         }
     }
 
-    /** Setup circle menu **/
-    private void setupCircleMenu() {
-        circleMenu = findViewById(R.id.load_map_circle_menu);
-        circleMenu.setMainMenu(Color.parseColor("#ffffff"), R.drawable.ic_edit_menu_24dp, R.mipmap.icon_cancel);
-        circleMenu.addSubMenu(Color.parseColor("#258CFF"), R.drawable.ic_building_white_24dp)
-                .addSubMenu(Color.parseColor("#30A400"), R.drawable.ic_traffic_white_48dp)
-                .addSubMenu(Color.parseColor("#FF4B32"), R.drawable.ic_line_white_24dp)
-                .addSubMenu(Color.parseColor("#8A39FF"), R.drawable.ic_atm_white_24dp)
-                .addSubMenu(Color.parseColor("#FF6A00"), R.drawable.ic_hospital_white_24dp)
-                .addSubMenu(Color.parseColor("#FF0000"), R.drawable.ic_undo_black_24dp);
-
-        circleMenu.setOnMenuSelectedListener(new OnMenuSelectedListener() {
-            @Override
-            public void onMenuSelected(int i) {
-                switch (i) {
-                    case 0:
-                        break;
-                    case 1:
-                        break;
-                    case 2:
-                        break;
-                    case 3:
-                        break;
-                    case 4:
-                        break;
-                    case 5:
-                        break;
-                }
-            }
-        });
-
-        circleMenu.setOnMenuStatusChangeListener(new OnMenuStatusChangeListener() {
-            @Override
-            public void onMenuOpened() {
-                Toast.makeText(getBaseContext(), "Choose an object", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onMenuClosed() {
-            }
-        });
-    }
 
     /** Init map view **/
     private void setupMapView(Bundle savedInstanceState) {
@@ -292,14 +249,10 @@ public class LoadMapActivity extends AppCompatActivity implements LocationListen
         btnLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                btnLocation.setFocusable(true);
-                if (directedLocationOverlay.isEnabled()&& directedLocationOverlay.getLocation() != null){
-                    Toast.makeText(getBaseContext(), "True", Toast.LENGTH_SHORT).show();
+                if (directedLocationOverlay.isEnabled()&& directedLocationOverlay.getLocation() != null)
                     map_view.getController().animateTo(directedLocationOverlay.getLocation());
-                }
-                btnLocation.clearFocus();
-                Toast.makeText(getBaseContext(), "false", Toast.LENGTH_SHORT).show();
-
+                else
+                    Toast.makeText(getBaseContext(), "Cannot access your location", Toast.LENGTH_SHORT).show();
             }
         });
     }

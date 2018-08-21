@@ -5,9 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#fbf4ed"
     tools:context=".SettingsActivity">
-
-
 
     <TextView
         android:layout_width="match_parent"
@@ -31,5 +30,63 @@
         android:layout_alignParentTop="true"
         android:background="@android:color/transparent"
         app:srcCompat="@drawable/ic_arrow_back_24dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="80dp"
+        android:layout_centerHorizontal="true" >
+
+        <Button
+            android:id="@+id/settings_page_feedback_btn"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="30dp"
+            android:layout_marginLeft="20sp"
+            android:layout_marginRight="20sp"
+            android:text="  Give Me Feedback"
+            android:gravity="center_vertical"
+            android:textAllCaps="false"
+            android:textSize="20sp"
+            android:textColor="#fff"
+            android:background="@drawable/style_save_map_share_btn"
+            android:drawableLeft="@drawable/ic_feedback_white_24dp"
+            android:paddingLeft="20dp"/>
+
+        <Button
+            android:id="@+id/settings_page_bug_intro_btn"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="30dp"
+            android:layout_marginLeft="20sp"
+            android:layout_marginRight="20sp"
+            android:text="  Report Bugs"
+            android:gravity="center_vertical"
+            android:textAllCaps="false"
+            android:textSize="20sp"
+            android:textColor="#fff"
+            android:background="@drawable/style_save_map_cancel_btn"
+            android:drawableLeft="@drawable/ic_bug_report_white_24dp"
+            android:paddingLeft="20dp"/>
+
+        <Button
+            android:id="@+id/settings_page_review_intro_btn"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="30dp"
+            android:layout_marginLeft="20sp"
+            android:layout_marginRight="20sp"
+            android:text="  Review Introduction Pages"
+            android:gravity="center_vertical"
+            android:textAllCaps="false"
+            android:textSize="20sp"
+            android:textColor="#fff"
+            android:background="@drawable/style_save_map_confirm_btn"
+            android:drawableLeft="@drawable/ic_slideshow_white_24dp"
+            android:paddingLeft="20dp" />
+    </LinearLayout>
+
+
 
 </RelativeLayout>

@@ -7,9 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -40,12 +38,10 @@ import org.osmdroid.tileprovider.MapTileProviderBase;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.util.NetworkLocationIgnorer;
-import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.views.overlay.PathOverlay;
 import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
@@ -66,7 +62,6 @@ import com.hitomi.cmlibrary.OnMenuSelectedListener;
 import com.hitomi.cmlibrary.OnMenuStatusChangeListener;
 
 import java.io.File;
-import java.security.Policy;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -441,7 +436,7 @@ private Polyline polyline;
                 String owner = mapOwner.getText().toString();
                 String description = mapDescription.getText().toString();
                 String date = mapDate.getText().toString();
-                String tracking = name + "_" + owner + "_" + date + ".kml";
+                String tracking = name + "_" + owner + "_" + date.replaceAll("/","") + ".kml";
 
                 if (name.equals("")) {
                     mapName.setError("Input map name");
@@ -460,8 +455,10 @@ private Polyline polyline;
                     Boolean insert = db.saveMap(name, city, description, owner, date, tracking, userID);
                     if (insert) {
                         if (routeOverlay != null) {
-                            for (int i=0; i<routeOverlay.length; i++)
-                                kmlDocument.mKmlRoot.addOverlay(routeOverlay[i],kmlDocument);
+//                            for (int i=0; i<routeOverlay.length; i++)
+//                                kmlDocument.mKmlRoot.addOverlay(routeOverlay[i],kmlDocument);
+                            for (Polyline aRouteOverlay : routeOverlay)
+                                kmlDocument.mKmlRoot.addOverlay(aRouteOverlay, kmlDocument);
                         }
                         kmlDocument.mKmlRoot.addOverlay(folderOverlay, kmlDocument);
                         // Save map overlay
@@ -630,11 +627,6 @@ private Polyline polyline;
                     startActivity(intent_edit);
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                     break;
-                case R.id.navigation_cloud:
-                    Intent intent_cloud = new Intent(MapActivity.this, CloudActivity.class);
-                    startActivity(intent_cloud);
-                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-                    break;
                 case R.id.navigation_account:
                     Intent intent_account = new Intent(MapActivity.this, AccountActivity.class);
                     startActivity(intent_account);
@@ -692,7 +684,7 @@ private Polyline polyline;
                 //keep the map view centered on current location:
                 map_view.getController().animateTo(newLocation);
                 map_view.setMapOrientation(-mAzimuthAngleSpeed);
-                recordCurrentLocationInTrack("my_track", "My Track", newLocation);
+                recordCurrentLocationInTrack(newLocation);
                 routeLine.addPoint(newLocation);
                 routeLineLocation.add(location);
             }
@@ -740,26 +732,25 @@ private Polyline polyline;
         map_view.invalidate();
     }
 
-    void recordCurrentLocationInTrack(String trackId, String trackName, GeoPoint currentLocation) {
+    void recordCurrentLocationInTrack(GeoPoint currentLocation) {
         //Find the KML track in the current KML structure - and create it if necessary:
-        KmlTrack t;
-        KmlFeature f = kmlDocument.mKmlRoot.findFeatureId(trackId, false);
-        if (f == null)
-            t = createTrack(trackId, trackName);
-        else if (!(f instanceof KmlPlacemark))
+        KmlTrack kmlTrack;
+        KmlFeature kmlFeature = kmlDocument.mKmlRoot.findFeatureId("my_track", false);
+        if (kmlFeature == null)
+            kmlTrack = createTrack("my_track", "My Track");
+        else if (!(kmlFeature instanceof KmlPlacemark))
             //id already defined but is not a PlaceMark
             return;
         else {
-            KmlPlacemark p = (KmlPlacemark)f;
-            if (!(p.mGeometry instanceof KmlTrack))
+            KmlPlacemark kmlPlacemark = (KmlPlacemark)kmlFeature;
+            if (!(kmlPlacemark.mGeometry instanceof KmlTrack))
                 //id already defined but is not a Track
                 return;
             else
-                t = (KmlTrack) p.mGeometry;
+                kmlTrack = (KmlTrack) kmlPlacemark.mGeometry;
         }
-        //TODO check if current location is really different from last point of the track
         //record in the track the current location at current time:
-        t.add(currentLocation, new Date());
+        kmlTrack.add(currentLocation, new Date());
         //refresh KML:
         updateUIWithKml();
     }

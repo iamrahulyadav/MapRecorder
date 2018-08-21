@@ -18,11 +18,13 @@ public class OnboardingActivity extends AppCompatActivity {
     private Button mNextBtn;
     private Button mBackBtn;
     private int mCurrentPage;
-
+    UserSessionManager session;
     OnboardingHelper onboardingHelper;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        session = new UserSessionManager(getApplicationContext());
+
         setContentView(R.layout.activity_onboarding);
 
         vpOnboarding = findViewById(R.id.onboarding_viewPager);
@@ -43,10 +45,18 @@ public class OnboardingActivity extends AppCompatActivity {
                 if (currentPage < mDots.length) {
                     vpOnboarding.setCurrentItem(mCurrentPage + 1);
                 } else {
-                    Intent intent = new Intent(OnboardingActivity.this, LoginActivity.class);
-                    startActivity(intent);
-                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-                    finish();
+                    if (!session.checkLogin()) {
+                        Intent intent_settings = new Intent(OnboardingActivity.this, SettingsActivity.class);
+                        startActivity(intent_settings);
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        finish();
+                    } else {
+                        Intent intent_login = new Intent(OnboardingActivity.this, LoginActivity.class);
+                        startActivity(intent_login);
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        finish();
+                    }
+
                 }
             }
         });

@@ -19,7 +19,7 @@ import java.util.HashMap;
 public class EditProfileActivity extends AppCompatActivity {
 
     ImageButton btnBack, editUsernameBtn, editEmailBtn;
-    EditText editUsernameText, editEmailText = (EditText)findViewById(R.id.edit_profile_email_text);
+    EditText editUsernameText, editEmailText;
     Database db;
     private Dialog changePasswordDialog;
 
@@ -201,5 +201,6 @@ public class EditProfileActivity extends AppCompatActivity {
         editUsernameBtn = findViewById(R.id.edit_profile_change_username_btn);
         editEmailBtn = findViewById(R.id.edit_profile_change_email_btn);
         editUsernameText = findViewById(R.id.edit_profile_username_text);
+        editEmailText = findViewById(R.id.edit_profile_email_text);
     }
 }

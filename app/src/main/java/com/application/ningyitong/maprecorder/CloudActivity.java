@@ -216,8 +216,6 @@ public class CloudActivity extends AppCompatActivity {
                     startActivity(intent_edit);
                     overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
                     break;
-                case R.id.navigation_cloud:
-                    break;
                 case R.id.navigation_account:
                     Intent intent_account = new Intent(CloudActivity.this, AccountActivity.class);
                     startActivity(intent_account);

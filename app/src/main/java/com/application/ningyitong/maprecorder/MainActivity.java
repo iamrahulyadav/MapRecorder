@@ -2,8 +2,7 @@ package com.application.ningyitong.maprecorder;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -101,40 +100,41 @@ public class MainActivity extends Activity {
 
         // Check device permissions
         if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-                || checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                || checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+                || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION }, 0);
         }
     }
 
-    // Permission
-    //@Override
-    public void onRequetPermissionsResult (int requestCode, String[] permissions, int[] grantResults) {
-        if (grantResults[0] == PackageManager.PERMISSION_GRANTED
-                || grantResults[1] == PackageManager.PERMISSION_GRANTED
-                || grantResults[2] == PackageManager.PERMISSION_GRANTED) {
-
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
-                        || shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        || shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setMessage("Enable to continue the app.").setTitle("Necessary permission required");
-                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                requestPermissions(new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-                            }
-                        }
-                    });
-                    requestPermissions(new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-                } else {
-                    Toast.makeText(this, "Some functons of the application are disabled", Toast.LENGTH_LONG).show();
-                }
-            }
-        }
-    }
+//    // Permission
+//    //@Override
+//    public void onRequetPermissionsResult (int requestCode, String[] permissions, int[] grantResults) {
+//        if (grantResults[0] == PackageManager.PERMISSION_GRANTED
+//                || grantResults[1] == PackageManager.PERMISSION_GRANTED
+//                || grantResults[2] == PackageManager.PERMISSION_GRANTED) {
+//
+//        } else {
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
+//                        || shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+//                        || shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+//                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//                    builder.setMessage("Enable to continue the app.").setTitle("Necessary permission required");
+//                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+//                        @Override
+//                        public void onClick(DialogInterface dialogInterface, int i) {
+//                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                                requestPermissions(new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+//                            }
+//                        }
+//                    });
+//                    requestPermissions(new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+//                } else {
+//                    Toast.makeText(this, "Some functons of the application are disabled", Toast.LENGTH_LONG).show();
+//                }
+//            }
+//        }
+//    }
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -152,11 +152,6 @@ public class MainActivity extends Activity {
                 case R.id.navigation_edit:
                     Intent intent_edit = new Intent(MainActivity.this, EditActivity.class);
                     startActivity(intent_edit);
-                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-                    break;
-                case R.id.navigation_cloud:
-                    Intent intent_cloud = new Intent(MainActivity.this, CloudActivity.class);
-                    startActivity(intent_cloud);
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                     break;
                 case R.id.navigation_account:

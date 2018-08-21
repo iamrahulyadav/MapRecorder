@@ -17,11 +17,6 @@
         android:title="@string/title_activity_edit" />
 
     <item
-        android:id="@+id/navigation_cloud"
-        android:icon="@drawable/ic_cloud_black_24dp"
-        android:title="@string/title_activity_cloud" />
-
-    <item
         android:id="@+id/navigation_account"
         android:icon="@drawable/ic_account_box_black_24dp"
         android:title="@string/title_activity_account" />

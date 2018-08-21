@@ -26,10 +26,10 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="60dp"
-        android:text="Current speed"
         android:textColor="#000"
         android:textSize="20sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        tools:ignore="RelativeOverlap" />
     <TextView
         android:id="@+id/draw_polyline_status"
         android:layout_width="wrap_content"
@@ -38,14 +38,15 @@
         android:layout_marginTop="90dp"
         android:textColor="#000"
         android:textSize="20sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        tools:ignore="RelativeOverlap" />
+
     <com.hitomi.cmlibrary.CircleMenu
         android:id="@+id/edit_map_circle_menu"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="50dp"
-        />
+        android:layout_marginBottom="50dp" />
 
     <LinearLayout
         android:layout_width="wrap_content"

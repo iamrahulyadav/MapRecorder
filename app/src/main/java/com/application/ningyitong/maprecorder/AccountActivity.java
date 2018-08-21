@@ -124,7 +124,7 @@ public class AccountActivity extends AppCompatActivity {
         BottomNavigationView navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         Menu menu = navigation.getMenu();
-        MenuItem menuItem = menu.getItem(4);
+        MenuItem menuItem = menu.getItem(3);
         menuItem.setChecked(true);
     }
 
@@ -147,11 +147,6 @@ public class AccountActivity extends AppCompatActivity {
                 case R.id.navigation_edit:
                     Intent intent_edit = new Intent(AccountActivity.this, EditActivity.class);
                     startActivity(intent_edit);
-                    overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
-                    break;
-                case R.id.navigation_cloud:
-                    Intent intent_cloud = new Intent(AccountActivity.this, CloudActivity.class);
-                    startActivity(intent_cloud);
                     overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
                     break;
                 case R.id.navigation_account:

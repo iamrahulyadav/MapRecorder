@@ -200,11 +200,6 @@ public class EditActivity extends AppCompatActivity {
                     break;
                 case R.id.navigation_edit:
                     break;
-                case R.id.navigation_cloud:
-                    Intent intent_cloud = new Intent(EditActivity.this, CloudActivity.class);
-                    startActivity(intent_cloud);
-                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-                    break;
                 case R.id.navigation_account:
                     Intent intent_account = new Intent(EditActivity.this, AccountActivity.class);
                     startActivity(intent_account);

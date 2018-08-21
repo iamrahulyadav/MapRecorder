@@ -144,9 +144,11 @@
             android:orientation="vertical" >
             <Button
                 android:id="@+id/map_item_share_btn"
-                android:layout_width="300dp"
-                android:layout_height="45dp"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
                 android:layout_marginBottom="10dp"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
                 android:background="@drawable/style_save_map_share_btn"
                 android:drawableLeft="@drawable/ic_share_white_24dp"
                 android:paddingLeft="10dp"
@@ -155,9 +157,11 @@
 
             <Button
                 android:id="@+id/map_item_save_btn"
-                android:layout_width="300dp"
-                android:layout_height="45dp"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
                 android:layout_marginBottom="10dp"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
                 android:layout_alignTop="@+id/map_item_delete_btn"
                 android:background="@drawable/style_save_map_confirm_btn"
                 android:drawableLeft="@drawable/ic_save_white_24dp"
@@ -167,9 +171,11 @@
 
             <Button
                 android:id="@+id/map_item_delete_btn"
-                android:layout_width="300dp"
-                android:layout_height="45dp"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
                 android:layout_marginBottom="30dp"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
                 android:background="@drawable/style_save_map_cancel_btn"
                 android:drawableLeft="@drawable/ic_delete_forever_white_24dp"
                 android:paddingLeft="10dp"
