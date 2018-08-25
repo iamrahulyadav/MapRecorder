@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -18,6 +19,7 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -83,12 +85,13 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
     KmlDocument kmlDocument;
     private Polyline routeLine;
     private ArrayList<Location> routeLineLocation;
-//    FolderOverlay mKmlOverlay;
+    //    FolderOverlay mKmlOverlay;
     // Location API
     GeoPoint startPoint, destinationPoint;
     LocationManager locationManager;
+    private String gpsProvider;
     protected Polyline[] routeOverlay;
-//    OsmLocationUpdateHelper locationUpdateHelper;
+    OsmLocationUpdateHelper locationUpdateHelper;
     DirectedLocationOverlay directedLocationOverlay;
     // Location update interval
     private static final long UPDATE_INTERVAL = 10000;
@@ -98,14 +101,13 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
     private final String OBJECT_HOSPITAL = "Hospital";
     private final String OBJECT_ATM = "ATM";
     private final String OBJECT_TRAFFIC_LIGHT = "Traffic Light";
-    private final String OBJECT_LINE = "Line";
     private final String OBJECT_HOTEL = "Hotel";
     private final String OBJECT_SHOP = "Shop";
     private final String OBJECT_HOUSE = "House";
 
     private Boolean isDrawPolyline = false;
     String object = "";
-private Polyline polyline;
+    private Polyline polyline;
     TextView drawPolylineText;
     // user session
     UserSessionManager session;
@@ -139,6 +141,9 @@ private Polyline polyline;
         // Initial OSM
         setupMapView(savedInstanceState);
 
+        Criteria criteria = new Criteria();
+        gpsProvider = locationManager.getBestProvider(criteria, false);
+
         // Set folder overlay: markers
         folderOverlay = new FolderOverlay();
         folderOverlay.setName("Map Markers");
@@ -160,20 +165,27 @@ private Polyline polyline;
         MyLocationNewOverlay myLocationNewOverlay = new MyLocationNewOverlay(map_view);
 
         drawPolylineText = findViewById(R.id.draw_polyline_status);
+
+        locationUpdateHelper = new OsmLocationUpdateHelper(this);
+
     }
 
     public void updateUIWithObjectMarkers() {
         folderOverlay.closeAllInfoWindows();
         folderOverlay.getItems().clear();
-        for (int i=0; i<objectMarkers.size(); i++) {
+        for (int i = 0; i < objectMarkers.size(); i++) {
             drawMarker(objectMarkers.get(i), object, -1);
         }
     }
 
     class OnObjectMarkerDragListener implements Marker.OnMarkerDragListener {
-        @Override public void onMarkerDrag(Marker marker) {}
-        @Override public void onMarkerDragEnd(Marker marker) {
-            int index = (Integer)marker.getRelatedObject();
+        @Override
+        public void onMarkerDrag(Marker marker) {
+        }
+
+        @Override
+        public void onMarkerDragEnd(Marker marker) {
+            int index = (Integer) marker.getRelatedObject();
             objectMarkers.set(index, marker.getPosition());
             marker.setSnippet(marker.getPosition().getLatitude() + " " + marker.getPosition().getLongitude());
         }
@@ -182,6 +194,7 @@ private Polyline polyline;
         public void onMarkerDragStart(Marker marker) {
         }
     }
+
     final OnObjectMarkerDragListener onObjectMarkerDragListener = new OnObjectMarkerDragListener();
 
     public void deletePoint(int selectMarker) {
@@ -230,13 +243,14 @@ private Polyline polyline;
         }
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         marker.setRelatedObject(index);
-        marker.setSnippet(p.getLatitude()+ " " + p.getLongitude());
+        marker.setSnippet(p.getLatitude() + " " + p.getLongitude());
         folderOverlay.add(marker);
 
 //        map_view.getOverlays().add(marker);
         map_view.invalidate();
 //        kmlDocument.mKmlRoot.addOverlay(marker, kmlDocument);
     }
+
     /** Draw polyline **/
     public void drawPolyline() {
         isDrawPolyline = true;
@@ -287,6 +301,7 @@ private Polyline polyline;
             }
         });
     }
+
     /** Create start marker **/
     private void addStartMarker(GeoPoint startPoint) {
         Marker startMarker = new Marker(map_view);
@@ -295,11 +310,12 @@ private Polyline polyline;
         startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         startMarker.setDraggable(true);
 //        startMarker.setOnMarkerDragListener(onObjectMarkerDragListener);
-        startMarker.setSnippet(startPoint.getLatitude()+ " " + startPoint.getLongitude());
+        startMarker.setSnippet(startPoint.getLatitude() + " " + startPoint.getLongitude());
         map_view.getOverlays().add(startMarker);
 //        kmlDocument.mKmlRoot.addOverlay(startMarker, kmlDocument);
         folderOverlay.add(startMarker);
     }
+
     /** Create end marker **/
     private void addEndMarker(GeoPoint endPoint) {
         Marker endMarker = new Marker(map_view);
@@ -308,7 +324,7 @@ private Polyline polyline;
         endMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         endMarker.setDraggable(true);
 //        endMarker.setOnMarkerDragListener(onObjectMarkerDragListener);
-        endMarker.setSnippet(startPoint.getLatitude()+ " " + startPoint.getLongitude());
+        endMarker.setSnippet(startPoint.getLatitude() + " " + startPoint.getLongitude());
         map_view.getOverlays().add(endMarker);
 //        kmlDocument.mKmlRoot.addOverlay(endMarker, kmlDocument);
         folderOverlay.add(endMarker);
@@ -436,7 +452,7 @@ private Polyline polyline;
                 String owner = mapOwner.getText().toString();
                 String description = mapDescription.getText().toString();
                 String date = mapDate.getText().toString();
-                String tracking = name + "_" + owner + "_" + date.replaceAll("/","") + ".kml";
+                String tracking = name + "_" + owner + "_" + date.replaceAll("/", "") + ".kml";
 
                 if (name.equals("")) {
                     mapName.setError("Input map name");
@@ -480,6 +496,7 @@ private Polyline polyline;
         saveMapDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         saveMapDialog.show();
     }
+
     /** Save KML file **/
     private void saveKmlFile(String fileName) {
         boolean saved;
@@ -488,7 +505,7 @@ private Polyline polyline;
         if (saved)
             Toast.makeText(this, fileName + " saved", Toast.LENGTH_SHORT).show();
         else
-            Toast.makeText(this, "Unable to save "+fileName, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Unable to save " + fileName, Toast.LENGTH_SHORT).show();
     }
 
     /** Create map controller buttons
@@ -517,7 +534,7 @@ private Polyline polyline;
             @Override
             public void onClick(View v) {
                 btnLocation.setFocusable(true);
-                if (directedLocationOverlay.isEnabled()&& directedLocationOverlay.getLocation() != null){
+                if (directedLocationOverlay.isEnabled() && directedLocationOverlay.getLocation() != null) {
                     map_view.getController().animateTo(directedLocationOverlay.getLocation());
                 }
                 map_view.setMapOrientation(-mAzimuthAngleSpeed);
@@ -561,12 +578,12 @@ private Polyline polyline;
         map_view.getOverlays().add(mapEventsOverlay);
         // Create Location Manager
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        mapController.setCenter(new GeoPoint((double) sharedPreferences.getFloat("CENTER_LAT", 53.384f), (double)sharedPreferences.getFloat("CENTER_LON", -1.491f)));
+        mapController.setCenter(new GeoPoint((double) sharedPreferences.getFloat("CENTER_LAT", 53.384f), (double) sharedPreferences.getFloat("CENTER_LON", -1.491f)));
         // Create map location overlay
         directedLocationOverlay = new DirectedLocationOverlay(this);
         map_view.getOverlays().add(directedLocationOverlay);
 
-        if (savedInstanceState == null){
+        if (savedInstanceState == null) {
             Location location = null;
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -583,11 +600,11 @@ private Polyline polyline;
             destinationPoint = null;
             objectMarkers = new ArrayList<>();
 
-            if (directedLocationOverlay.isEnabled()&& directedLocationOverlay.getLocation() != null){
+            if (directedLocationOverlay.isEnabled() && directedLocationOverlay.getLocation() != null) {
                 mapController.animateTo(directedLocationOverlay.getLocation());
             }
         } else {
-            directedLocationOverlay.setLocation((GeoPoint)savedInstanceState.getParcelable("location"));
+            directedLocationOverlay.setLocation((GeoPoint) savedInstanceState.getParcelable("location"));
             //TODO: restore other aspects of myLocationOverlay...
             startPoint = savedInstanceState.getParcelable("start");
             destinationPoint = savedInstanceState.getParcelable("destination");
@@ -600,15 +617,16 @@ private Polyline polyline;
     private void savePreferences() {
         SharedPreferences prefs = getSharedPreferences("MAPRECORDER", MODE_PRIVATE);
         SharedPreferences.Editor ed = prefs.edit();
-        ed.putFloat("ZOOM_LEVEL", (float)map_view.getZoomLevelDouble());
+        ed.putFloat("ZOOM_LEVEL", (float) map_view.getZoomLevelDouble());
         GeoPoint center = (GeoPoint) map_view.getMapCenter();
-        ed.putFloat("CENTER_LAT", (float)center.getLatitude());
-        ed.putFloat("CENTER_LON", (float)center.getLongitude());
+        ed.putFloat("CENTER_LAT", (float) center.getLatitude());
+        ed.putFloat("CENTER_LON", (float) center.getLongitude());
         MapTileProviderBase tileProvider = map_view.getTileProvider();
         String tileProviderName = tileProvider.getTileSource().name();
         ed.putString("TILE_PROVIDER", tileProviderName);
         ed.apply();
     }
+
     /** Bottom navigation bar function **/
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -641,45 +659,41 @@ private Polyline polyline;
     private final NetworkLocationIgnorer networkLocationIgnorer = new NetworkLocationIgnorer();
     long lastTime;
     double speed;
+
     @Override
     public void onLocationChanged(final Location location) {
-        Toast.makeText(getBaseContext(), "Latitude = " + location.getLatitude() * 1e6 + " Longitude = " + location.getLongitude() * 1e6, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getBaseContext(), "MapMap" + "Latitude = " + location.getLatitude() * 1e6 + " Longitude = " + location.getLongitude() * 1e6, Toast.LENGTH_SHORT).show();
         long currentTime = System.currentTimeMillis();
         if (networkLocationIgnorer.shouldIgnore(location.getProvider(), currentTime))
             return;
         double dT = currentTime - lastTime;
-        if (dT < 100.0){
+        if (dT < 100.0) {
             //Toast.makeText(this, pLoc.getProvider()+" dT="+dT, Toast.LENGTH_SHORT).show();
             return;
         }
         lastTime = currentTime;
 
         GeoPoint newLocation = new GeoPoint(location);
-//        if (!directedLocationOverlay.isEnabled()){
-//            //we get the location for the first time:
-//            directedLocationOverlay.setEnabled(true);
-//            map_view.getController().animateTo(newLocation);
-//        }
 
         GeoPoint prevLocation = directedLocationOverlay.getLocation();
         directedLocationOverlay.setLocation(newLocation);
-        directedLocationOverlay.setAccuracy((int)location.getAccuracy());
+        directedLocationOverlay.setAccuracy((int) location.getAccuracy());
 
 //        if (prevLocation != null && location.getProvider().equals(LocationManager.GPS_PROVIDER)){
-            speed = location.getSpeed() * 3.6;
-            long speedInt = Math.round(speed);
-            TextView speedTxt = findViewById(R.id.speed);
-            String speedString = String.format("Speed: %s km/h", speedInt);
-            speedTxt.setText(speedString);
+        speed = location.getSpeed() * 3.6;
+        long speedInt = Math.round(speed);
+        TextView speedTxt = findViewById(R.id.speed);
+        String speedString = String.format("Speed: %s km/h", speedInt);
+        speedTxt.setText(speedString);
 
-            //TODO: check if speed is not too small
-            if (speed >= 0.1){
-                mAzimuthAngleSpeed = location.getBearing();
-                directedLocationOverlay.setBearing(mAzimuthAngleSpeed);
-            }
+        //TODO: check if speed is not too small
+        if (speed >= 0.1) {
+            mAzimuthAngleSpeed = location.getBearing();
+            directedLocationOverlay.setBearing(mAzimuthAngleSpeed);
+        }
 //        }
 
-        if (isRecording){
+        if (isRecording) {
             if (speed >= 0.1) {
                 //keep the map view centered on current location:
                 map_view.getController().animateTo(newLocation);
@@ -693,8 +707,9 @@ private Polyline polyline;
     }
 
     static int[] TrackColor = {
-            Color.CYAN-0x20000000, Color.BLUE-0x20000000, Color.MAGENTA-0x20000000, Color.RED-0x20000000, Color.YELLOW-0x20000000
+            Color.CYAN - 0x20000000, Color.BLUE - 0x20000000, Color.MAGENTA - 0x20000000, Color.RED - 0x20000000, Color.YELLOW - 0x20000000
     };
+
     KmlTrack createTrack(String id, String name) {
         KmlTrack kmlTrack = new KmlTrack();
         KmlPlacemark kmlPlacemark = new KmlPlacemark();
@@ -710,24 +725,26 @@ private Polyline polyline;
             color = color % TrackColor.length;
             color = TrackColor[color];
         } catch (NumberFormatException e) {
-            color = Color.GREEN-0x20000000;
+            color = Color.GREEN - 0x20000000;
         }
         style.mLineStyle = new LineStyle(color, 8.0f);
         kmlPlacemark.mStyle = kmlDocument.addStyle(style);
         return kmlTrack;
     }
-    Style buildDefaultStyle(){
+
+    Style buildDefaultStyle() {
         Drawable defaultKmlMarker = ResourcesCompat.getDrawable(getResources(), R.drawable.marker_default, null);
         assert defaultKmlMarker != null;
-        Bitmap bitmap = ((BitmapDrawable)defaultKmlMarker).getBitmap();
+        Bitmap bitmap = ((BitmapDrawable) defaultKmlMarker).getBitmap();
         return new Style(bitmap, 0x901010AA, 3.0f, 0x20AA1010);
     }
-    void updateUIWithKml(){
-        if (folderOverlay != null){
+
+    void updateUIWithKml() {
+        if (folderOverlay != null) {
             folderOverlay.closeAllInfoWindows();
             map_view.getOverlays().remove(folderOverlay);
         }
-        folderOverlay = (FolderOverlay)kmlDocument.mKmlRoot.buildOverlay(map_view, buildDefaultStyle(), null, kmlDocument);
+        folderOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(map_view, buildDefaultStyle(), null, kmlDocument);
         map_view.getOverlays().add(folderOverlay);
         map_view.invalidate();
     }
@@ -742,7 +759,7 @@ private Polyline polyline;
             //id already defined but is not a PlaceMark
             return;
         else {
-            KmlPlacemark kmlPlacemark = (KmlPlacemark)kmlFeature;
+            KmlPlacemark kmlPlacemark = (KmlPlacemark) kmlFeature;
             if (!(kmlPlacemark.mGeometry instanceof KmlTrack))
                 //id already defined but is not a Track
                 return;
@@ -776,7 +793,7 @@ private Polyline polyline;
         if (!object.equals("")) {
             Toast.makeText(getBaseContext(), "Put " + object + " " + p.getLatitude() + "-" + p.getLongitude(), Toast.LENGTH_LONG).show();
             objectMarkers.add(p);
-            drawMarker(p, object, objectMarkers.size()-1);
+            drawMarker(p, object, objectMarkers.size() - 1);
             object = "";
         }
 
@@ -789,7 +806,7 @@ private Polyline polyline;
 
     @Override
     public boolean longPressHelper(GeoPoint p) {
-        if (isDrawPolyline){
+        if (isDrawPolyline) {
             isDrawPolyline = false;
             folderOverlay.add(polyline);
             Toast.makeText(getBaseContext(), "Exit draw polyline mode.", Toast.LENGTH_SHORT).show();
@@ -799,8 +816,12 @@ private Polyline polyline;
     }
 
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        locationManager.requestLocationUpdates(gpsProvider, 200, 1, this);
         Configuration.getInstance().load(getApplicationContext(), PreferenceManager.getDefaultSharedPreferences(getApplicationContext()));
         if (map_view!=null)
             map_view.onResume();
