@@ -62,7 +62,6 @@
             android:launchMode="standard" />
         <activity android:name=".EditProfileActivity" />
         <activity android:name=".EditMapItemActivity" />
-        <activity android:name=".LoadMapActivity" />
     </application>
 
 </manifest>

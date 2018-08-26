@@ -51,11 +51,11 @@ public class EditMapItemActivity extends AppCompatActivity {
         btnLoadMap.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent loadMapActivity = new Intent(EditMapItemActivity.this, LoadMapActivity.class);
-                loadMapActivity.putExtra("id", selectedMapID);
-                loadMapActivity.putExtra("name", selectedMapName);
-                loadMapActivity.putExtra("tracking", selectedMapUrl);
-                startActivity(loadMapActivity);
+                Intent mapActivity = new Intent(EditMapItemActivity.this, MapActivity.class);
+                mapActivity.putExtra("id", selectedMapID);
+                mapActivity.putExtra("name", selectedMapName);
+                mapActivity.putExtra("tracking", selectedMapUrl);
+                startActivity(mapActivity);
             }
         });
 

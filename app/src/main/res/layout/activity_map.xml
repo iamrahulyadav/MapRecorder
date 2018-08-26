@@ -27,7 +27,17 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="60dp"
         android:textColor="#000"
-        android:textSize="20sp"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        tools:ignore="RelativeOverlap" />
+    <TextView
+        android:id="@+id/loaded_map_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="120dp"
+        android:textColor="#000"
+        android:textSize="18sp"
         android:textStyle="bold"
         tools:ignore="RelativeOverlap" />
     <TextView
@@ -37,7 +47,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="90dp"
         android:textColor="#000"
-        android:textSize="20sp"
+        android:textSize="18sp"
         android:textStyle="bold"
         tools:ignore="RelativeOverlap" />
 

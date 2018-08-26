@@ -46,7 +46,7 @@ public class ObjectMarkerInfoWindow extends InfoWindow {
             @Override
             public void onClick(View view) {
                 MapActivity mapActivity = (MapActivity) view.getContext();
-                mapActivity.deletePoint(selectMarker);
+                mapActivity.deleteMarker(marker, selectMarker);
                 close();
             }
         });
@@ -74,7 +74,7 @@ public class ObjectMarkerInfoWindow extends InfoWindow {
         linearLayout.addView(markerDescriptionET);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Edit Details");
+        builder.setTitle("Edit Marker Details");
         builder.setView(linearLayout);
         builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
             @Override

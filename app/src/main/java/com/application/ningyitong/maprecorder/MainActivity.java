@@ -45,7 +45,7 @@ public class MainActivity extends Activity {
 
     private void permissionState() {
         // Check SDK version
-        if (Build.VERSION.SDK_INT < 23)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
             return;
 
         // Check device permissions
