@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/marker_bubble_layout"
+    android:id="@+id/polyline_polygon_bubble_layout"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:minWidth="200dp"
@@ -10,7 +10,7 @@
     android:orientation="vertical"
     android:background="@drawable/style_save_map_dialog" >
 
-    <TextView android:id="@+id/marker_title"
+    <TextView android:id="@+id/polyline_polygon_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
@@ -18,30 +18,17 @@
         android:textColor="#000000"
         android:maxEms="17"
         android:text="Title" />
-    <TextView android:id="@+id/marker_description"
+
+    <TextView android:id="@+id/polyline_polygon_description"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
         android:textColor="#000000"
+        android:layout_marginLeft="10dp"
         android:textSize="12dp"
         android:maxEms="17"
+        android:layout_marginTop="5dp"
         android:text="Description" />
-    <TextView android:id="@+id/marker_lati"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:textColor="#000000"
-        android:textSize="12dp"
-        android:maxEms="17"
-        android:text="Latitude" />
-    <TextView android:id="@+id/marker_long"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:textColor="#000000"
-        android:textSize="12dp"
-        android:maxEms="17"
-        android:text="Longitude" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="30dp"
@@ -50,7 +37,7 @@
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp" >
         <Button
-            android:id="@+id/marker_delete_btn"
+            android:id="@+id/polyline_polygon_delete_btn"
             style="@style/Base.TextAppearance.AppCompat.Body1"
             android:layout_width="wrap_content"
             android:minWidth="80dp"
@@ -64,7 +51,7 @@
             android:textSize="15sp"
             android:focusable="true" />
         <Button
-            android:id="@+id/marker_edit_btn"
+            android:id="@+id/polyline_polygon_edit_btn"
             style="@style/Base.TextAppearance.AppCompat.Body1"
             android:layout_width="wrap_content"
             android:layout_height="25dp"

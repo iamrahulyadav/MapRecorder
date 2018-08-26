@@ -1,12 +1,13 @@
 package com.application.ningyitong.maprecorder;
 
+import java.io.File;
+
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -19,36 +20,16 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.SettingsClient;
-import com.hitomi.cmlibrary.CircleMenu;
-import com.hitomi.cmlibrary.OnMenuSelectedListener;
-import com.hitomi.cmlibrary.OnMenuStatusChangeListener;
-
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
-import org.osmdroid.events.MapEventsReceiver;
-import org.osmdroid.tileprovider.tilesource.ITileSource;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
-import org.osmdroid.util.TileSystem;
-import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
-import org.osmdroid.views.overlay.MapEventsOverlay;
-import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
-import org.osmdroid.views.overlay.TilesOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.mylocation.DirectedLocationOverlay;
-
-import java.io.File;
-import java.util.ArrayList;
 
 public class LoadMapActivity extends AppCompatActivity implements LocationListener{
 
@@ -57,7 +38,6 @@ public class LoadMapActivity extends AppCompatActivity implements LocationListen
     TextView mapTitleText;
     DirectedLocationOverlay directedLocationOverlay;
 
-    Database db;
     private MapView map_view;
     private IMapController mapController;
     private Context context;
@@ -65,10 +45,8 @@ public class LoadMapActivity extends AppCompatActivity implements LocationListen
     // Location API
     LocationManager locationManager;
 
-
     // user session
     UserSessionManager session;
-    int userID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,8 +67,6 @@ public class LoadMapActivity extends AppCompatActivity implements LocationListen
         setupMapView(savedInstanceState);
         // Initial Zoom control button
         setupMapControlBtn();
-        // Setup circle menu
-//        setupCircleMenu();
 
         mapTitleText = findViewById(R.id.load_map_title);
         mapTitleText.setText(mapTitle);
@@ -130,7 +106,8 @@ public class LoadMapActivity extends AppCompatActivity implements LocationListen
 
     }
 
-    class KmlLoader extends AsyncTask<Void, Void, Void> {
+    @SuppressLint("StaticFieldLeak")
+    private class KmlLoader extends AsyncTask<Void, Void, Void> {
         ProgressDialog progressDialog = new ProgressDialog(context);
         KmlDocument kmlDocument;
 
@@ -227,8 +204,9 @@ public class LoadMapActivity extends AppCompatActivity implements LocationListen
 
     }
 
+    /** Create map control button **/
     private void setupMapControlBtn() {
-        // Zoom button
+        // Create zoom in button
         ImageButton btnZoomIn = findViewById(R.id.load_map_zoom_in);
         btnZoomIn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -237,6 +215,7 @@ public class LoadMapActivity extends AppCompatActivity implements LocationListen
             }
         });
 
+        // Create zoom out button
         ImageButton btnZoomOut = findViewById(R.id.load_map_zoom_out);
         btnZoomOut.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -245,6 +224,7 @@ public class LoadMapActivity extends AppCompatActivity implements LocationListen
             }
         });
 
+        // Create navigate to current location button
         final ImageButton btnLocation = findViewById(R.id.load_map_location_track);
         btnLocation.setOnClickListener(new View.OnClickListener() {
             @Override

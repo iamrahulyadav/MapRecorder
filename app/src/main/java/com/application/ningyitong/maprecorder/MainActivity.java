@@ -5,7 +5,6 @@ import android.app.Activity;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -13,18 +12,7 @@ import android.support.design.widget.BottomNavigationView;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import android.widget.ListAdapter;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
-import android.widget.Toast;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
 public class MainActivity extends Activity {
-    Database db;
-    private ArrayList<HashMap<String, String>> mapList;
-    private ListView listView;
 
     // user session
     UserSessionManager session;
@@ -45,44 +33,6 @@ public class MainActivity extends Activity {
 
         // Setup bottom nav-bar
         setupBottomNavbar();
-
-        // Create list view
-        listView = findViewById(R.id.mapDataList_main);
-        mapList = new ArrayList<>();
-
-        // Load local map list
-        loadMapList();
-    }
-
-    private void loadMapList() {
-        db = new Database(this);
-        Cursor mapItems = db.getTableItems();
-        mapList.clear();
-        if (mapItems.getCount()>0) {
-            mapItems.moveToFirst();
-            for (int i=0; i<mapItems.getCount(); i++) {
-                String listName = mapItems.getString(mapItems.getColumnIndex("name"));
-                String listOwner = "Owner: " + mapItems.getString(mapItems.getColumnIndex("owner"));
-                String listCity = "City: " + mapItems.getString(mapItems.getColumnIndex("city"));
-                String listDescription = mapItems.getString(mapItems.getColumnIndex("description"));
-                HashMap<String, String> maps = new HashMap<>();
-                maps.put("name", listName);
-                maps.put("owner", listOwner);
-                maps.put("city", listCity);
-                maps.put("description", listDescription);
-                mapList.add(maps);
-                mapItems.moveToNext();
-            }
-            ListAdapter adapter = new SimpleAdapter(MainActivity.this,
-                    mapList,
-                    R.layout.map_listview_items,
-                    new String[] {"name", "city", "owner", "description"},
-                    new int[] {R.id.list_item_map_name, R.id.list_item_map_city, R.id.list_item_map_owner, R.id.list_item_map_description});
-            listView.setAdapter(adapter);
-        } else {
-            listView.setAdapter(null);
-            Toast.makeText(this, "No Map Data", Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void setupBottomNavbar() {
@@ -105,36 +55,6 @@ public class MainActivity extends Activity {
             requestPermissions(new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION }, 0);
         }
     }
-
-//    // Permission
-//    //@Override
-//    public void onRequetPermissionsResult (int requestCode, String[] permissions, int[] grantResults) {
-//        if (grantResults[0] == PackageManager.PERMISSION_GRANTED
-//                || grantResults[1] == PackageManager.PERMISSION_GRANTED
-//                || grantResults[2] == PackageManager.PERMISSION_GRANTED) {
-//
-//        } else {
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//                if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
-//                        || shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-//                        || shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-//                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//                    builder.setMessage("Enable to continue the app.").setTitle("Necessary permission required");
-//                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-//                        @Override
-//                        public void onClick(DialogInterface dialogInterface, int i) {
-//                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//                                requestPermissions(new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-//                            }
-//                        }
-//                    });
-//                    requestPermissions(new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-//                } else {
-//                    Toast.makeText(this, "Some functons of the application are disabled", Toast.LENGTH_LONG).show();
-//                }
-//            }
-//        }
-//    }
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {

@@ -1,6 +1,5 @@
 package com.application.ningyitong.maprecorder;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -10,43 +9,39 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.application.ningyitong.maprecorder.MapActivity;
+import com.application.ningyitong.maprecorder.R;
+
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.infowindow.InfoWindow;
-import org.osmdroid.views.overlay.Marker;
 
-public class ObjectMarkerInfoWindow extends InfoWindow {
+public class ObjectPolylineInfoWindow extends InfoWindow {
 
-    /**
-     * To have a better details in Object markers
-     * Custom the markers info window
-     */
-    private int selectMarker;
+    private int selectPolyline;
 
-    public ObjectMarkerInfoWindow(int layoutResId, MapView mapView) {
+    public ObjectPolylineInfoWindow(int layoutResId, MapView mapView) {
         super(layoutResId, mapView);
     }
 
-    @SuppressLint("SetTextI18n")
     @Override
     public void onOpen(Object object) {
-        TextView markerTitle = mView.findViewById(R.id.marker_title);
-        TextView markerDescription = mView.findViewById(R.id.marker_description);
-        TextView markerLati = mView.findViewById(R.id.marker_lati);
-        TextView markerLong = mView.findViewById(R.id.marker_long);
-        Button btnDelete = mView.findViewById(R.id.marker_delete_btn);
-        Button btnEdit = mView.findViewById(R.id.marker_edit_btn);
+        final Polyline polyline = (Polyline)object;
 
-        final Marker marker = (Marker)object;
-        selectMarker = (Integer)marker.getRelatedObject();
-        markerTitle.setText(marker.getTitle());
-        markerLati.setText("Lati: " + marker.getPosition().getLatitude());
-        markerLong.setText("Long: " + marker.getPosition().getLongitude());
+        TextView title = mView.findViewById(R.id.polyline_polygon_title);
+        TextView description = mView.findViewById(R.id.polyline_polygon_description);
+        Button btnDelete = mView.findViewById(R.id.polyline_polygon_delete_btn);
+        Button btnEdit = mView.findViewById(R.id.polyline_polygon_edit_btn);
+
+        selectPolyline = (Integer)polyline.getRelatedObject();
+        title.setText(polyline.getTitle());
+        description.setText(polyline.getSubDescription());
 
         btnDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 MapActivity mapActivity = (MapActivity) view.getContext();
-                mapActivity.deletePoint(selectMarker);
+                mapActivity.deletePolyline(polyline, selectPolyline);
                 close();
             }
         });
@@ -54,24 +49,24 @@ public class ObjectMarkerInfoWindow extends InfoWindow {
         btnEdit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                createEditDialog(marker);
+                createEdidDialog(polyline);
                 close();
             }
         });
     }
 
-    private void createEditDialog(final Marker marker) {
+    private void createEdidDialog(final Polyline polyline) {
         Context context = mMapView.getContext();
 
-        final EditText markerTitleET = new EditText(context);
-        markerTitleET.setHint("Enter marker title");
-        final EditText markerDescriptionET = new EditText(context);
-        markerDescriptionET.setHint("Enter marker description");
+        final EditText polylineTitleET = new EditText(context);
+        polylineTitleET.setHint("Enter line title");
+        final EditText polylineDescriptionET = new EditText(context);
+        polylineDescriptionET.setHint("Enter line description");
         LinearLayout linearLayout = new LinearLayout(context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
         linearLayout.setPadding(40,20,40,20);
-        linearLayout.addView(markerTitleET);
-        linearLayout.addView(markerDescriptionET);
+        linearLayout.addView(polylineTitleET);
+        linearLayout.addView(polylineDescriptionET);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Edit Details");
@@ -79,8 +74,8 @@ public class ObjectMarkerInfoWindow extends InfoWindow {
         builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                marker.setTitle("Type: " + markerTitleET.getText().toString());
-                marker.setSubDescription("Description: \n" + markerDescriptionET.getText().toString());
+                polyline.setTitle("Title: " + polylineTitleET.getText().toString());
+                polyline.setSubDescription("Description: \n" + polylineDescriptionET.getText().toString());
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -90,7 +85,6 @@ public class ObjectMarkerInfoWindow extends InfoWindow {
             }
         });
         builder.show();
-
     }
 
     @Override

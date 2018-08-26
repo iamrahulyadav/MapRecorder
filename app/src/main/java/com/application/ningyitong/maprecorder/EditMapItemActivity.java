@@ -18,7 +18,7 @@ import org.osmdroid.bonuspack.kml.KmlDocument;
 import java.io.File;
 
 public class EditMapItemActivity extends AppCompatActivity {
-
+    // Create functional instances
     Database db;
     Button btnShare, btnDelete, btnSave;
     ImageButton btnBack, btnLoadMap;
@@ -36,7 +36,7 @@ public class EditMapItemActivity extends AppCompatActivity {
         // Create back page btn
         createBackBtn();
 
-        // Find view
+        // Initialise view
         initView();
 
         // Get data from EditActivity
