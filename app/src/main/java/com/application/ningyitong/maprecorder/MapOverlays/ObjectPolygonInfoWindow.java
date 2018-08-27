@@ -1,4 +1,4 @@
-package com.application.ningyitong.maprecorder;
+package com.application.ningyitong.maprecorder.MapOverlays;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -13,35 +13,35 @@ import com.application.ningyitong.maprecorder.MapActivity;
 import com.application.ningyitong.maprecorder.R;
 
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.Polyline;
+import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.infowindow.InfoWindow;
 
-public class ObjectPolylineInfoWindow extends InfoWindow {
+public class ObjectPolygonInfoWindow extends InfoWindow{
 
-    private int selectPolyline;
+    private int selectPolygon;
 
-    public ObjectPolylineInfoWindow(int layoutResId, MapView mapView) {
+    public ObjectPolygonInfoWindow(int layoutResId, MapView mapView) {
         super(layoutResId, mapView);
     }
 
     @Override
     public void onOpen(Object object) {
-        final Polyline polyline = (Polyline)object;
+        final Polygon polygon = (Polygon)object;
 
         TextView title = mView.findViewById(R.id.polyline_polygon_title);
         TextView description = mView.findViewById(R.id.polyline_polygon_description);
         Button btnDelete = mView.findViewById(R.id.polyline_polygon_delete_btn);
         Button btnEdit = mView.findViewById(R.id.polyline_polygon_edit_btn);
 
-        selectPolyline = (Integer)polyline.getRelatedObject();
-        title.setText(polyline.getTitle());
-        description.setText(polyline.getSubDescription());
+        selectPolygon = (Integer)polygon.getRelatedObject();
+        title.setText(polygon.getTitle());
+        description.setText(polygon.getSubDescription());
 
         btnDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 MapActivity mapActivity = (MapActivity) view.getContext();
-                mapActivity.deletePolyline(polyline, selectPolyline);
+                mapActivity.deletePolygon(polygon, selectPolygon);
                 close();
             }
         });
@@ -49,24 +49,24 @@ public class ObjectPolylineInfoWindow extends InfoWindow {
         btnEdit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                createEdidDialog(polyline);
+                createEdidDialog(polygon);
                 close();
             }
         });
     }
 
-    private void createEdidDialog(final Polyline polyline) {
+    private void createEdidDialog(final Polygon polygon) {
         Context context = mMapView.getContext();
 
-        final EditText polylineTitleET = new EditText(context);
-        polylineTitleET.setHint("Enter line title");
-        final EditText polylineDescriptionET = new EditText(context);
-        polylineDescriptionET.setHint("Enter line description");
+        final EditText polygonTitleET = new EditText(context);
+        polygonTitleET.setHint("Enter polygon title");
+        final EditText polygonDescriptionET = new EditText(context);
+        polygonDescriptionET.setHint("Enter polygon description");
         LinearLayout linearLayout = new LinearLayout(context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
         linearLayout.setPadding(40,20,40,20);
-        linearLayout.addView(polylineTitleET);
-        linearLayout.addView(polylineDescriptionET);
+        linearLayout.addView(polygonTitleET);
+        linearLayout.addView(polygonDescriptionET);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Edit Details");
@@ -74,8 +74,8 @@ public class ObjectPolylineInfoWindow extends InfoWindow {
         builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                polyline.setTitle("Title: " + polylineTitleET.getText().toString());
-                polyline.setSubDescription("Description: \n" + polylineDescriptionET.getText().toString());
+                polygon.setTitle("Title: " + polygonTitleET.getText().toString());
+                polygon.setSubDescription("Description: \n" + polygonDescriptionET.getText().toString());
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

@@ -26,6 +26,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -64,6 +65,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.application.ningyitong.maprecorder.Account.AccountActivity;
+import com.application.ningyitong.maprecorder.Account.UserSessionManager;
+import com.application.ningyitong.maprecorder.MapList.EditActivity;
+import com.application.ningyitong.maprecorder.MapOverlays.ObjectMarkerInfoWindow;
+import com.application.ningyitong.maprecorder.MapOverlays.ObjectPolygonInfoWindow;
+import com.application.ningyitong.maprecorder.MapOverlays.ObjectPolylineInfoWindow;
+import com.application.ningyitong.maprecorder.MapOverlays.OnObjectMarkerDragListener;
 import com.hitomi.cmlibrary.CircleMenu;
 import com.hitomi.cmlibrary.OnMenuSelectedListener;
 import com.hitomi.cmlibrary.OnMenuStatusChangeListener;
@@ -76,7 +84,7 @@ import java.util.Objects;
 
 public class MapActivity extends AppCompatActivity implements MapEventsReceiver, LocationListener {
     // Create functional instance
-    Database db;
+    DatabaseHelper db;
     SharedPreferences sharedPreferences;
     UserSessionManager session;
     int userID;
@@ -89,10 +97,11 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
     private IMapController mapController;
     private LocationManager locationManager;
     private DirectedLocationOverlay directedLocationOverlay;
+    private OnObjectMarkerDragListener onObjectMarkerDragListener;
 
     // OSM map overlay variables
     private KmlDocument kmlDocument;    // Create KmlDocument to save Map details and export them to .kml file
-    private FolderOverlay folderOverlay;    // Create FolderOverlay instace to save overlays
+    private FolderOverlay folderOverlay;    // Create FolderOverlay instance to save overlays
     private Polyline routeLine; // Polyline for displaying GPS tracking path
 //    private ArrayList<Location> routeLineLocation;  // Location array for saving GPS tracking location
     private ArrayList<Marker> objectMarkers;
@@ -157,24 +166,12 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
 
         // Setup bottom nav-bar
         setupBottomNavbar();
-        // Check if is loading map
-        context = this;
-        Intent receivedIntent = getIntent();
-        loadedMapId = receivedIntent.getIntExtra("id", -1);
-        loadedMapTitle = receivedIntent.getStringExtra("name");
-        loadedMapUrl = receivedIntent.getStringExtra("tracking");
-        if (loadedMapTitle==null || loadedMapUrl==null) {
-            kmlDocument = new KmlDocument();    // Create KML file
-            folderOverlay = new FolderOverlay();    // Create folder overlay: markers
-            folderOverlay.setName("Map Markers");
-            // Display folder overlay
-            map_view.getOverlays().add(folderOverlay);
-            updateUIWithOverlays();
-        }
-        else
-            loadExistMap();
         // Initial OSM map view
         setupMapView(savedInstanceState);
+
+        // Check if is loading map
+        initFolderOverlay();
+
         // Get best GPS provider
         Criteria criteria = new Criteria();
         gpsProvider = locationManager.getBestProvider(criteria, false);
@@ -190,14 +187,38 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         setupCircleMenu();
     }
 
+    private void initFolderOverlay() {
+        context = this; // Get MapActivity context
+        kmlDocument = new KmlDocument();    // Create KML file
+        folderOverlay = new FolderOverlay();    // Create folder overlay
+        folderOverlay.setName("Map Overlays");  // Set folder overlay name
+        onObjectMarkerDragListener = new OnObjectMarkerDragListener();  // Create marker drag listener
+        // Retrieve data from map item
+        Intent receivedIntent = getIntent();
+        loadedMapId = receivedIntent.getIntExtra("id", -1);
+        loadedMapTitle = receivedIntent.getStringExtra("name");
+        loadedMapUrl = receivedIntent.getStringExtra("tracking");
+
+        // If data is null, then start a new map and update map_view
+        // If data is not null, load .kml file and update map_view
+        if (loadedMapTitle==null || loadedMapUrl==null) {
+            map_view.getOverlays().add(folderOverlay);  // Display folder overlay
+            updateUIWithOverlays();
+        }
+        else
+            loadExistMap();
+    }
+
     /** Method to load KML file if exists **/
     private void loadExistMap() {
+        // Display map title on map view
         TextView loadedMapTitleTV = findViewById(R.id.loaded_map_title);
         loadedMapTitleTV.setText(loadedMapTitle);
+
+        // Load kml file
         new KmlLoader().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
     class MyKmlStyler implements KmlFeature.Styler {
-
         @Override
         public void onFeature(Overlay overlay, KmlFeature kmlFeature) {
 
@@ -205,11 +226,10 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
 
         @Override
         public void onPoint(Marker marker, KmlPlacemark kmlPlacemark, KmlPoint kmlPoint) {
-            objectMarkerInfoWindow = new ObjectMarkerInfoWindow(R.layout.marker_bubble, map_view);
-            marker.setInfoWindow(objectMarkerInfoWindow);
             marker.setDraggable(true);
             marker.setOnMarkerDragListener(onObjectMarkerDragListener);
-            marker.setRelatedObject(objectMarkers.size());
+            objectMarkers.add(marker);
+            marker.setRelatedObject(objectMarkers.size()-1);
             // Set marker icon based on object type
             switch (marker.getTitle().replace("Type: ", "")) {
                 case OBJECT_BUILDING:
@@ -233,28 +253,29 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                 default:
                     break;
             }
-            objectMarkers.add(marker);
+            objectMarkerInfoWindow = new ObjectMarkerInfoWindow(R.layout.marker_bubble, map_view);
+            marker.setInfoWindow(objectMarkerInfoWindow);
         }
 
         @Override
         public void onLineString(Polyline polyline, KmlPlacemark kmlPlacemark, KmlLineString kmlLineString) {
-            objectPolylineInfoWindow = new ObjectPolylineInfoWindow(R.layout.polyline_polygon_bubble, map_view);
-            polyline.setInfoWindow(objectPolylineInfoWindow);
             polyline.setColor(Color.RED);
             polyline.setWidth(15);
             objectPolylines.add(polyline);
-            polyline.setRelatedObject(objectPolylines.size());
+            polyline.setRelatedObject(objectPolylines.size()-1);
+            objectPolylineInfoWindow = new ObjectPolylineInfoWindow(R.layout.polyline_polygon_bubble, map_view);
+            polyline.setInfoWindow(objectPolylineInfoWindow);
         }
 
         @Override
         public void onPolygon(Polygon polygon, KmlPlacemark kmlPlacemark, KmlPolygon kmlPolygon) {
-            objectPolygonInfoWindow = new ObjectPolygonInfoWindow(R.layout.polyline_polygon_bubble, map_view);
-            polygon.setInfoWindow(objectPolygonInfoWindow);
             polygon.setFillColor(0x12121212);
             polygon.setStrokeColor(Color.RED);
             polygon.setStrokeWidth(10);
             objectPolygons.add(polygon);
-            polygon.setRelatedObject(objectPolygons.size());
+            polygon.setRelatedObject(objectPolygons.size()-1);
+            objectPolygonInfoWindow = new ObjectPolygonInfoWindow(R.layout.polyline_polygon_bubble, map_view);
+            polygon.setInfoWindow(objectPolygonInfoWindow);
         }
 
         @Override
@@ -275,23 +296,27 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
 
         @Override
         protected Void doInBackground(Void... voids) {
-            kmlDocument = new KmlDocument();
-            // Add styler
-            KmlFeature.Styler styler = new MyKmlStyler();
+            // Create custom style
+            KmlFeature.Styler customStyle = new MyKmlStyler();
             File file = kmlDocument.getDefaultPathForAndroid(loadedMapUrl);
-            kmlDocument.parseKMLFile(file);
-            folderOverlay = new FolderOverlay();
-            folderOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(map_view, null, styler, kmlDocument);
-            map_view.getOverlays().add(folderOverlay);
-//            updateUIWithOverlays();
-            return null;
 
+            // Read kml file
+            kmlDocument.parseKMLFile(file);
+            // Save kml file overlays to folderOverlay with custom style
+            folderOverlay = new FolderOverlay();
+            folderOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(map_view, null, customStyle, kmlDocument);
+            // Display overlay items on map view
+            map_view.getOverlays().add(folderOverlay);
+            return null;
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
+            // Dismiss progress dialog after finishing read kml file
             progressDialog.dismiss();
+            // Update map view
             map_view.invalidate();
+            // Get bounding area from kml file, and navigate to it as the center of map
             try {
                 BoundingBox bb = kmlDocument.mKmlRoot.getBoundingBox();
                 if (bb != null) {
@@ -300,45 +325,34 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
             } catch (Exception exception){
                 Toast.makeText(getBaseContext(), "KML map Bounding Box Error, you still can view it", Toast.LENGTH_SHORT).show();
             }
-
-            //map_view.zoomToBoundingBox(bb, true);
-//            mapView.getController().setCenter(bb.getCenter());
             super.onPostExecute(aVoid);
         }
     }
 
+    /** Update map view method
+     * Update map view after each delete
+     * Clear folder overlay and re-allocate it
+     * Re-allocate the index order of overlay item array lists**/
     public void updateUIWithOverlays() {
         folderOverlay.closeAllInfoWindows();
         folderOverlay.getItems().clear();
-//        map_view.getOverlays().clear();
+        // Re-order marker array list
         for (int i=0; i<objectMarkers.size(); i++) {
+            objectMarkers.get(i).setRelatedObject(i);
             folderOverlay.add(objectMarkers.get(i));
         }
+        // Re-order polyline array list
         for (int i=0; i<objectPolylines.size(); i++) {
+            objectPolylines.get(i).setRelatedObject(i);
             folderOverlay.add(objectPolylines.get(i));
         }
+        // Re-order polygon array list
         for (int i=0; i<objectPolygons.size(); i++) {
+            objectPolygons.get(i).setRelatedObject(i);
             folderOverlay.add(objectPolygons.get(i));
         }
         map_view.invalidate();
     }
-
-    class OnObjectMarkerDragListener implements Marker.OnMarkerDragListener {
-        @Override
-        public void onMarkerDrag(Marker marker) {
-        }
-
-        @Override
-        public void onMarkerDragEnd(Marker marker) {
-            marker.setSnippet(marker.getPosition().getLatitude() + " " + marker.getPosition().getLongitude());
-        }
-
-        @Override
-        public void onMarkerDragStart(Marker marker) {
-        }
-    }
-
-    final OnObjectMarkerDragListener onObjectMarkerDragListener = new OnObjectMarkerDragListener();
 
     public void deleteMarker(Marker selectMarker, int index) {
         objectMarkers.remove(index);
@@ -397,6 +411,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         marker.setSnippet(p.getLatitude() + " " + p.getLongitude());
         folderOverlay.add(marker);
         objectMarkers.add(marker);
+        Toast.makeText(getBaseContext(), "Save marker index: " + objectMarkers.size(), Toast.LENGTH_SHORT).show();
         map_view.invalidate();
     }
 
@@ -482,7 +497,6 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                         // Create start marker
                         startPoint = directedLocationOverlay.getLocation();
                         addStartMarker(startPoint);
-//                        routeLineLocation = new ArrayList<>();
                         routeLine = new Polyline();
                         routeLine.setWidth(15);
                         routeLine.addPoint(startPoint);
@@ -607,10 +621,11 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         }
 
         if (loadedMapId != -1) {
-            kmlDocument.mKmlRoot.addOverlay(folderOverlay, kmlDocument);
+            KmlDocument savedKmlDocument = new KmlDocument();
+            savedKmlDocument.mKmlRoot.addOverlay(folderOverlay, savedKmlDocument);
             // Save map overlay
-            saveKmlFile(loadedMapUrl);
-            Toast.makeText(getBaseContext(), "Modify map details successuf.", Toast.LENGTH_SHORT).show();
+            saveKmlFile(savedKmlDocument, loadedMapUrl);
+            Toast.makeText(getBaseContext(), "Modify map details successful.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -636,7 +651,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         });
 
         // Map info
-        db = new Database(this);
+        db = new DatabaseHelper(this);
         mapName = saveMapDialog.findViewById(R.id.save_map_title);
         mapCity = saveMapDialog.findViewById(R.id.save_map_city);
         mapOwner = saveMapDialog.findViewById(R.id.save_map_owner);
@@ -672,7 +687,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                     if (insert) {
                         kmlDocument.mKmlRoot.addOverlay(folderOverlay, kmlDocument);
                         // Save map overlay
-                        saveKmlFile(tracking);
+                        saveKmlFile(kmlDocument, tracking);
                         Toast.makeText(getBaseContext(), "Save map info successfully", Toast.LENGTH_SHORT).show();
                         saveMapDialog.dismiss();
                         locationManager.removeUpdates(MapActivity.this);    // Remove location listener after saving map
@@ -695,19 +710,19 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
     }
 
     /** Save KML file **/
-    private void saveKmlFile(String fileName) {
+    private void saveKmlFile(KmlDocument kmlFile, String fileName) {
         boolean saved;
-        File file = kmlDocument.getDefaultPathForAndroid(fileName);
+        File file = kmlFile.getDefaultPathForAndroid(fileName);
         if (file.exists()) {
             boolean deleteSuccessful = file.delete();
             if (deleteSuccessful)
-                Toast.makeText(getBaseContext(), "Delete exist .kml file successful", Toast.LENGTH_SHORT).show();
+                Log.v("Delete File", "Delete exist .kml file successful");
             else
-                Toast.makeText(getBaseContext(), "Delete exist .kml file faield, the current will be overrite", Toast.LENGTH_SHORT).show();
+                Log.v("Delete File", "Delete exist .kml file failed, the current will be overwritten");
         }
-        saved = kmlDocument.saveAsKML(file);
+        saved = kmlFile.saveAsKML(file);
         if (saved)
-            Toast.makeText(this, fileName + " saved", Toast.LENGTH_SHORT).show();
+            Log.v("Delete File", fileName + " saved");
         else
             Toast.makeText(this, "Unable to save " + fileName, Toast.LENGTH_SHORT).show();
     }
@@ -822,7 +837,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         }
     }
 
-    /** Save map preferences **/
+    // Save map preferences
     // TODO
 //    private void savePreferences() {
 //        SharedPreferences prefs = getSharedPreferences("MAPRECORDER", MODE_PRIVATE);
@@ -1058,7 +1073,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        locationManager.requestLocationUpdates(gpsProvider, 500, 1, this);  // IMPORTANT! Call LocationListner on resume, in case of only call LocationListener only once
+        locationManager.requestLocationUpdates(gpsProvider, 500, 1, this);  // IMPORTANT! Call LocationListener on resume, in case of only call LocationListener only once
         Configuration.getInstance().load(getApplicationContext(), PreferenceManager.getDefaultSharedPreferences(getApplicationContext()));
         if (map_view!=null)
             map_view.onResume();

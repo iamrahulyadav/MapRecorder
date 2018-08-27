@@ -1,4 +1,4 @@
-package com.application.ningyitong.maprecorder;
+package com.application.ningyitong.maprecorder.Account;
 
 import android.app.Dialog;
 import android.database.Cursor;
@@ -14,13 +14,17 @@ import android.widget.ImageButton;
 
 import android.widget.Toast;
 
+import com.application.ningyitong.maprecorder.Account.UserSessionManager;
+import com.application.ningyitong.maprecorder.DatabaseHelper;
+import com.application.ningyitong.maprecorder.R;
+
 import java.util.HashMap;
 
 public class EditProfileActivity extends AppCompatActivity {
 
     ImageButton btnBack, editUsernameBtn, editEmailBtn;
     EditText editUsernameText, editEmailText;
-    Database db;
+    DatabaseHelper db;
     private Dialog changePasswordDialog;
 
     // user session
@@ -187,7 +191,7 @@ public class EditProfileActivity extends AppCompatActivity {
 
     // Show user info
     private void showUserInfo() {
-        db = new Database(this);
+        db = new DatabaseHelper(this);
         Cursor userInfo = db.getUserInfoById(userID);
         userInfo.moveToFirst();
         username = userInfo.getString(userInfo.getColumnIndex("username"));

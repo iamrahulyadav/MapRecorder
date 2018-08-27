@@ -1,4 +1,4 @@
-package com.application.ningyitong.maprecorder;
+package com.application.ningyitong.maprecorder.MapOverlays;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -9,6 +9,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.application.ningyitong.maprecorder.MapActivity;
+import com.application.ningyitong.maprecorder.R;
 
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.infowindow.InfoWindow;
@@ -29,7 +32,7 @@ public class ObjectMarkerInfoWindow extends InfoWindow {
     @SuppressLint("SetTextI18n")
     @Override
     public void onOpen(Object object) {
-        TextView markerTitle = mView.findViewById(R.id.marker_title);
+//        TextView markerTitle = mView.findViewById(R.id.marker_title);
         TextView markerDescription = mView.findViewById(R.id.marker_description);
         TextView markerLati = mView.findViewById(R.id.marker_lati);
         TextView markerLong = mView.findViewById(R.id.marker_long);
@@ -38,7 +41,8 @@ public class ObjectMarkerInfoWindow extends InfoWindow {
 
         final Marker marker = (Marker)object;
         selectMarker = (Integer)marker.getRelatedObject();
-        markerTitle.setText(marker.getTitle());
+//        markerTitle.setText(marker.getTitle());
+        markerDescription.setText("Description: \n" + marker.getSubDescription());
         markerLati.setText("Lati: " + marker.getPosition().getLatitude());
         markerLong.setText("Long: " + marker.getPosition().getLongitude());
 
@@ -63,14 +67,14 @@ public class ObjectMarkerInfoWindow extends InfoWindow {
     private void createEditDialog(final Marker marker) {
         Context context = mMapView.getContext();
 
-        final EditText markerTitleET = new EditText(context);
-        markerTitleET.setHint("Enter marker title");
+//        final EditText markerTitleET = new EditText(context);
+//        markerTitleET.setHint("Enter marker title");
         final EditText markerDescriptionET = new EditText(context);
         markerDescriptionET.setHint("Enter marker description");
         LinearLayout linearLayout = new LinearLayout(context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
         linearLayout.setPadding(40,20,40,20);
-        linearLayout.addView(markerTitleET);
+//        linearLayout.addView(markerTitleET);
         linearLayout.addView(markerDescriptionET);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -79,7 +83,7 @@ public class ObjectMarkerInfoWindow extends InfoWindow {
         builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                marker.setTitle("Type: " + markerTitleET.getText().toString());
+//                marker.setTitle("Type: " + markerTitleET.getText().toString());
                 marker.setSubDescription("Description: \n" + markerDescriptionET.getText().toString());
             }
         });

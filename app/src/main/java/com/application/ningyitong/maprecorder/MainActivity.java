@@ -12,6 +12,10 @@ import android.support.design.widget.BottomNavigationView;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.application.ningyitong.maprecorder.Account.AccountActivity;
+import com.application.ningyitong.maprecorder.Account.UserSessionManager;
+import com.application.ningyitong.maprecorder.MapList.EditActivity;
+
 public class MainActivity extends Activity {
 
     // user session

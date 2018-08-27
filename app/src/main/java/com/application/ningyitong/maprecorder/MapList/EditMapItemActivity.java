@@ -1,4 +1,4 @@
-package com.application.ningyitong.maprecorder;
+package com.application.ningyitong.maprecorder.MapList;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -7,11 +7,16 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
+
+import com.application.ningyitong.maprecorder.DatabaseHelper;
+import com.application.ningyitong.maprecorder.MapActivity;
+import com.application.ningyitong.maprecorder.R;
 
 import org.osmdroid.bonuspack.kml.KmlDocument;
 
@@ -19,7 +24,7 @@ import java.io.File;
 
 public class EditMapItemActivity extends AppCompatActivity {
     // Create functional instances
-    Database db;
+    DatabaseHelper db;
     Button btnShare, btnDelete, btnSave;
     ImageButton btnBack, btnLoadMap;
     EditText mapName, mapCity, mapOwner, mapDescription, mapDate;
@@ -111,7 +116,7 @@ public class EditMapItemActivity extends AppCompatActivity {
         mapOwner = findViewById(R.id.map_item_owner);
         mapDescription = findViewById(R.id.map_item_description);
         mapDate = findViewById(R.id.map_item_date);
-        db = new Database(this);
+        db = new DatabaseHelper(this);
     }
 
     private void saveChangesConfirmationDialog() {
@@ -130,6 +135,14 @@ public class EditMapItemActivity extends AppCompatActivity {
 
                 if (newName.equals("")) {
                     mapName.setError("Input map name");
+                    return;
+                }
+                if (newOwner.equals("")) {
+                    mapOwner.setError("Input map owner");
+                    return;
+                }
+                if (newDate.equals("")) {
+                    mapDate.setError("Input map date");
                     return;
                 }
 
@@ -166,9 +179,14 @@ public class EditMapItemActivity extends AppCompatActivity {
                 db.deleteMap(selectedMapID);
                 KmlDocument kmlDocument = new KmlDocument();
                 File file = kmlDocument.getDefaultPathForAndroid(selectedMapUrl);
-                if (file.exists())
-                    file.delete();
-                Toast.makeText(getBaseContext(), mapName.getText().toString() + "has been removed from database.", Toast.LENGTH_LONG).show();
+                if (file.exists()){
+                    boolean deleteSuccessful = file.delete();
+                    if (deleteSuccessful)
+                        Log.v("Delete File", "Delete exist .kml file successful");
+                    else
+                        Log.v("Delete File", "Delete exist .kml file failed, the current will be overwritten");
+                }
+                Toast.makeText(getBaseContext(), mapName.getText().toString() + "has been deleted.", Toast.LENGTH_LONG).show();
                 Intent intent_edit = new Intent(EditMapItemActivity.this, EditActivity.class);
                 startActivity(intent_edit);
             }
@@ -186,7 +204,7 @@ public class EditMapItemActivity extends AppCompatActivity {
 
     /** Show map current information **/
     private void showMapDetails(int selectedMapID, String selectedMapName) {
-        db = new Database(this);
+        db = new DatabaseHelper(this);
         Cursor mapItem = db.getMapInfoById(selectedMapID);
         if (mapItem.getCount()>0){
             mapItem.moveToFirst();

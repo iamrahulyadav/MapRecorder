@@ -24,14 +24,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".LoginActivity">
+        <activity android:name=".Account.LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".RegisterActivity" />
+        <activity android:name=".Account.RegisterActivity" />
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
@@ -40,15 +40,15 @@
             android:name=".MapActivity"
             android:launchMode="standard" />
         <activity
-            android:name=".EditActivity"
+            android:name=".MapList.EditActivity"
             android:launchMode="standard" />
         <activity
             android:name=".CloudActivity"
             android:launchMode="standard" />
         <activity
-            android:name=".AccountActivity"
+            android:name=".Account.AccountActivity"
             android:launchMode="standard" />
-        <activity android:name=".OnboardingActivity" />
+        <activity android:name=".OnboardingPages.OnboardingActivity" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -58,10 +58,10 @@
             android:value="id=1234567890" />
 
         <activity
-            android:name=".SettingsActivity"
+            android:name=".Account.SettingsActivity"
             android:launchMode="standard" />
-        <activity android:name=".EditProfileActivity" />
-        <activity android:name=".EditMapItemActivity" />
+        <activity android:name=".Account.EditProfileActivity" />
+        <activity android:name=".MapList.EditMapItemActivity" />
     </application>
 
 </manifest>
