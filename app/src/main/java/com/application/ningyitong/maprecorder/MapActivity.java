@@ -44,6 +44,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.util.NetworkLocationIgnorer;
+import org.osmdroid.util.PointReducer;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.MapEventsOverlay;
@@ -260,7 +261,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         @Override
         public void onLineString(Polyline polyline, KmlPlacemark kmlPlacemark, KmlLineString kmlLineString) {
             polyline.setColor(Color.RED);
-            polyline.setWidth(15);
+            polyline.setWidth(10);
             objectPolylines.add(polyline);
             polyline.setRelatedObject(objectPolylines.size()-1);
             objectPolylineInfoWindow = new ObjectPolylineInfoWindow(R.layout.polyline_polygon_bubble, map_view);
@@ -411,7 +412,6 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         marker.setSnippet(p.getLatitude() + " " + p.getLongitude());
         folderOverlay.add(marker);
         objectMarkers.add(marker);
-        Toast.makeText(getBaseContext(), "Save marker index: " + objectMarkers.size(), Toast.LENGTH_SHORT).show();
         map_view.invalidate();
     }
 
@@ -428,7 +428,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         objectPolylineInfoWindow = new ObjectPolylineInfoWindow(R.layout.polyline_polygon_bubble, map_view);
         polyline.setInfoWindow(objectPolylineInfoWindow);
         polyline.setColor(Color.RED);
-        polyline.setWidth(15);
+        polyline.setWidth(10);
         polyline.setRelatedObject(index);
         map_view.getOverlays().add(polyline);
     }
@@ -461,14 +461,13 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
             public void onClick(View view) {
                 if (isRecording) {
                     isRecording = false;
-//                    DouglasPeuckerAlgorithm douglasPeuckerAlgorithm = new DouglasPeuckerAlgorithm();
                     ArrayList<GeoPoint> pointsTemp;
-                    pointsTemp = DouglasPeuckerAlgorithm.reduceWithTolerance(routeLine.getPoints(), 1500.0);
+                    pointsTemp = PointReducer.reduceWithTolerance(routeLine.getPoints(), 1500.0);
                     Polyline newRouteLine = new Polyline();
                     newRouteLine.setPoints(pointsTemp);
                     objectPolylineInfoWindow = new ObjectPolylineInfoWindow(R.layout.polyline_polygon_bubble, map_view);
                     newRouteLine.setInfoWindow(objectPolylineInfoWindow);
-                    newRouteLine.setWidth(15);
+                    newRouteLine.setWidth(10);
                     newRouteLine.setRelatedObject(objectPolylines.size());
 
                     map_view.getOverlays().remove(routeLine);
@@ -498,7 +497,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                         startPoint = directedLocationOverlay.getLocation();
                         addStartMarker(startPoint);
                         routeLine = new Polyline();
-                        routeLine.setWidth(15);
+                        routeLine.setWidth(10);
                         routeLine.addPoint(startPoint);
                         map_view.getOverlays().add(routeLine);
                     }
@@ -803,7 +802,8 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
         map_view.getOverlays().add(mapEventsOverlay);
         // Create Location Manager
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        mapController.setCenter(new GeoPoint((double) sharedPreferences.getFloat("CENTER_LAT", 53.384f), (double) sharedPreferences.getFloat("CENTER_LON", -1.491f)));
+        mapController.setCenter(new GeoPoint((double) sharedPreferences.getFloat("CENTER_LAT", 53.384f),
+                (double) sharedPreferences.getFloat("CENTER_LON", -1.491f)));
         // Create map location overlay
         directedLocationOverlay = new DirectedLocationOverlay(this);
         map_view.getOverlays().add(directedLocationOverlay);

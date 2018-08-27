@@ -5,38 +5,31 @@ import org.osmdroid.util.GeoPoint;
 import java.util.ArrayList;
 
 public class DouglasPeuckerAlgorithm {
-    public static ArrayList<GeoPoint> reduceWithTolerance(ArrayList<GeoPoint> shape,
-                                                          double tolerance)
+    public static ArrayList<GeoPoint> reduceWithTolerance(ArrayList<GeoPoint> routePolyline, double tolerance)
     {
-        int n = shape.size();
+        int pointsNumber = routePolyline.size();
         // if a shape has 2 or less points it cannot be reduced
-        if (tolerance <= 0 || n < 3) {
-            return shape;
+        if (tolerance <= 0 || routePolyline.size() < 3) {
+            return routePolyline;
         }
 
-        boolean[] marked = new boolean[n]; //vertex indexes to keep will be marked as "true"
-        for (int i = 1; i < n - 1; i++)
-            marked[i] = false;
+        boolean[] validPoints = new boolean[pointsNumber]; //vertex indexes to keep will be marked as "true"
+        for (int i=1; i<pointsNumber-1; i++)
+            validPoints[i] = false;
         // automatically add the first and last point to the returned shape
-        marked[0] = marked[n - 1] = true;
+        validPoints[0] = validPoints[pointsNumber - 1] = true;
 
         // the first and last points in the original shape are
         // used as the entry point to the algorithm.
-        douglasPeuckerReduction(
-                shape, // original shape
-                marked, // reduced shape
-                tolerance, // tolerance
-                0, // index of first point
-                n - 1 // index of last point
-        );
+        douglasPeuckerReduction(routePolyline, validPoints, tolerance, 0,  pointsNumber - 1);
 
         // all done, return the reduced shape
-        ArrayList<GeoPoint> newShape = new ArrayList<GeoPoint>(n); // the new shape to return
-        for (int i = 0; i < n; i++) {
-            if (marked[i])
-                newShape.add(shape.get(i));
+        ArrayList<GeoPoint> newRoutePolyline = new ArrayList<>(pointsNumber); // the new shape to return
+        for (int i=0; i<pointsNumber; i++) {
+            if (validPoints[i])
+                newRoutePolyline.add(routePolyline.get(i));
         }
-        return newShape;
+        return newRoutePolyline;
     }
 
     /**
@@ -55,8 +48,7 @@ public class DouglasPeuckerAlgorithm {
      *            The index in original shape's point of the ending point for
      *            this line segment
      */
-    private static void douglasPeuckerReduction(ArrayList<GeoPoint> shape, boolean[] marked,
-                                                double tolerance, int firstIdx, int lastIdx)
+    private static void douglasPeuckerReduction(ArrayList<GeoPoint> shape, boolean[] marked, double tolerance, int firstIdx, int lastIdx)
     {
         if (lastIdx <= firstIdx + 1) {
             // overlapping indexes, just return
@@ -108,7 +100,7 @@ public class DouglasPeuckerAlgorithm {
      *            The point that ends the line
      * @return The distance in points coordinate system
      */
-    public static double orthogonalDistance(GeoPoint point, GeoPoint lineStart, GeoPoint lineEnd)
+    private static double orthogonalDistance(GeoPoint point, GeoPoint lineStart, GeoPoint lineEnd)
     {
         double area = Math.abs(
                 (
