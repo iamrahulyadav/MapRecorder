@@ -462,7 +462,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver,
                 if (isRecording) {
                     isRecording = false;
                     ArrayList<GeoPoint> pointsTemp;
-                    pointsTemp = PointReducer.reduceWithTolerance(routeLine.getPoints(), 1500.0);
+                    pointsTemp = PointReducer.reduceWithTolerance(routeLine.getPoints(), 0.000002);
                     Polyline newRouteLine = new Polyline();
                     newRouteLine.setPoints(pointsTemp);
                     objectPolylineInfoWindow = new ObjectPolylineInfoWindow(R.layout.polyline_polygon_bubble, map_view);
