@@ -5,12 +5,15 @@ import android.app.Activity;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 import com.application.ningyitong.maprecorder.Account.AccountActivity;
 import com.application.ningyitong.maprecorder.Account.UserSessionManager;
@@ -31,12 +34,24 @@ public class MainActivity extends Activity {
             finish();
         }
         setContentView(R.layout.activity_main);
-
         // Check and set permission
         permissionState();
-
         // Setup bottom nav-bar
         setupBottomNavbar();
+
+        TextView slumWiki = findViewById(R.id.main_page_slum_wiki_link);
+        slumWiki.setClickable(true);
+        slumWiki.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openUrl( "https://en.wikipedia.org/wiki/Slum");            }
+        });
+    }
+
+    private void openUrl(String url) {
+        Uri uriUrl = Uri.parse(url);
+        Intent launchBrowser = new Intent(Intent.ACTION_VIEW, uriUrl);
+        startActivity(launchBrowser);
     }
 
     private void setupBottomNavbar() {

@@ -60,27 +60,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="horizontal"
-                        android:weightSum="2">
-                        <LinearLayout
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="KM"
-                                android:textSize="20sp"/>
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="777"
-                                android:textSize="20sp"
-                                android:textStyle="bold"
-                                android:paddingTop="5dp"
-                                android:textColor="@color/colorFavorite"/>
-                        </LinearLayout>
+                        android:weightSum="1">
+
                         <LinearLayout
                             android:orientation="vertical"
                             android:gravity="center"
